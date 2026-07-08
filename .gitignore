@@ -1,0 +1,6 @@
+.env
+backend-nest/.env
+ai-service/.env
+ai-service/models/
+ai-service/captures/
+frontend/.env.local
