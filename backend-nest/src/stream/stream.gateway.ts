@@ -5,7 +5,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 
-@WebSocketGateway({ namespace: '/stream', cors: { origin: '*' } })
+@WebSocketGateway({ path: '/stream', cors: { origin: '*' } })
 export class StreamGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server!: Server;
   private clients = new Map<WebSocket, string>(); // ws → clientId

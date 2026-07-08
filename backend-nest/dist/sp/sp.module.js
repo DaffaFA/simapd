@@ -8,6 +8,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SpModule = void 0;
 const common_1 = require("@nestjs/common");
+const typeorm_1 = require("@nestjs/typeorm");
+const sp_record_entity_1 = require("./entities/sp-record.entity");
+const sp_config_entity_1 = require("./entities/sp-config.entity");
 const sp_service_1 = require("./sp.service");
 const sp_controller_1 = require("./sp.controller");
 let SpModule = class SpModule {
@@ -15,8 +18,10 @@ let SpModule = class SpModule {
 exports.SpModule = SpModule;
 exports.SpModule = SpModule = __decorate([
     (0, common_1.Module)({
+        imports: [typeorm_1.TypeOrmModule.forFeature([sp_record_entity_1.SpRecord, sp_config_entity_1.SpConfig])],
         controllers: [sp_controller_1.SpController],
         providers: [sp_service_1.SpService],
+        exports: [sp_service_1.SpService],
     })
 ], SpModule);
 //# sourceMappingURL=sp.module.js.map

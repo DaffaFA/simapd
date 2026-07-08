@@ -62,7 +62,7 @@ __decorate([
     __metadata("design:type", ws_1.Server)
 ], StreamGateway.prototype, "server", void 0);
 exports.StreamGateway = StreamGateway = __decorate([
-    (0, websockets_1.WebSocketGateway)({ namespace: '/stream', cors: { origin: '*' } }),
+    (0, websockets_1.WebSocketGateway)({ path: '/stream', cors: { origin: '*' } }),
     __metadata("design:paramtypes", [jwt_1.JwtService, config_1.ConfigService])
 ], StreamGateway);
 //# sourceMappingURL=stream.gateway.js.map
