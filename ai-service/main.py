@@ -6,7 +6,7 @@ def main():
   redis_url  = os.environ.get('REDIS_URL', 'redis://localhost:6379')
   rtsp_url   = os.environ.get('CAMERA_RTSP_URL', '')
   camera_id  = os.environ.get('CAMERA_ID', 'CAM-01')
-  model_path = os.environ.get('YOLO_MODEL_PATH', 'models/best.pt')
+  model_path = os.environ.get('YOLO_MODEL_PATH', 'models/simapd_yolov8m_sh17_DEPLOY.pt')
   confidence = float(os.environ.get('YOLO_CONFIDENCE', '0.45'))
 
   # Mock mode untuk development tanpa model

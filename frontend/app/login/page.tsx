@@ -1,21 +1,29 @@
 "use client";
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Shield, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '@/src/lib/AuthContext';
 
 export default function Login() {
-  const router = useRouter();
+  const { login } = useAuth();
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
-    setTimeout(() => {
+    try {
+      await login(username, password);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Login gagal';
+      setError(msg);
+    } finally {
       setLoading(false);
-      router.push('/');
-    }, 1000);
+    }
   };
 
   return (
@@ -129,7 +137,9 @@ export default function Login() {
               <label style={{ fontSize: 11, fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Username / Email</label>
               <input
                 type="text"
-                defaultValue="safety.officer@pelabuhan.id"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                placeholder="admin"
                 style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 7, padding: '10px 14px', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none', transition: 'border-color 0.15s' }}
                 onFocus={e => { e.target.style.borderColor = '#F97316'; }}
                 onBlur={e => { e.target.style.borderColor = '#1E2D3D'; }}
@@ -141,7 +151,9 @@ export default function Login() {
               <div style={{ position: 'relative' }}>
                 <input
                   type={showPass ? 'text' : 'password'}
-                  defaultValue="••••••••"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="••••••••"
                   style={{ width: '100%', background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 7, padding: '10px 40px 10px 14px', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.15s' }}
                   onFocus={e => { e.target.style.borderColor = '#F97316'; }}
                   onBlur={e => { e.target.style.borderColor = '#1E2D3D'; }}
@@ -155,6 +167,12 @@ export default function Login() {
                 </button>
               </div>
             </div>
+
+            {error && (
+              <div style={{ padding: '10px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6 }}>
+                <p style={{ fontSize: 12, color: '#EF4444', margin: 0, fontFamily: 'DM Sans, sans-serif' }}>{error}</p>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -193,7 +211,7 @@ export default function Login() {
 
           <div style={{ marginTop: 20, padding: '10px 12px', background: 'rgba(100,116,139,0.08)', border: '1px solid rgba(100,116,139,0.15)', borderRadius: 6 }}>
             <p style={{ fontSize: 11, color: '#64748B', margin: 0, textAlign: 'center' }}>
-              🔒 Sistem ini terbatas untuk <strong style={{ color: '#94A3B8' }}>Safety Officer</strong> & <strong style={{ color: '#94A3B8' }}>Supervisor</strong> yang berwenang
+              🔑 Demo: <strong style={{ color: '#94A3B8' }}>admin</strong> / <strong style={{ color: '#94A3B8' }}>admin123</strong>
             </p>
           </div>
         </div>

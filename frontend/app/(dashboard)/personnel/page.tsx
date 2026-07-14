@@ -1,26 +1,42 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Edit2, Eye, X } from 'lucide-react';
 import { HelmDot } from '@/components/shared/HelmDot';
 import { SPBadge } from '@/components/shared/StatusBadge';
 import { MiniProgressBar } from '@/components/shared/MiniProgressBar';
-import { mockPersonnel } from '@/components/shared/mockData';
+import { personnelApi } from '@/src/lib/api';
+import { mapPersonnel } from '@/src/lib/mappers';
 import type { Personnel } from '@/components/shared/types';
 
 export default function PersonnelPage() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [personnel, setPersonnel] = useState<Personnel[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = mockPersonnel.filter(p =>
+  const fetchPersonnel = useCallback(async () => {
+    try {
+      const res = await personnelApi.list({ page_size: '100' });
+      setPersonnel(res.items.map(mapPersonnel));
+    } catch (err) {
+      console.error('Failed to fetch personnel:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchPersonnel(); }, [fetchPersonnel]);
+
+  const filtered = personnel.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.employeeId.toLowerCase().includes(search.toLowerCase()) ||
     p.department.toLowerCase().includes(search.toLowerCase())
   );
 
-  const sp1Count = mockPersonnel.filter(p => p.sp === 'SP1').length;
-  const sp2Count = mockPersonnel.filter(p => p.sp === 'SP2').length;
-  const sp3Count = mockPersonnel.filter(p => p.sp === 'SP3').length;
+  const sp1Count = personnel.filter(p => p.sp === 'SP1').length;
+  const sp2Count = personnel.filter(p => p.sp === 'SP2').length;
+  const sp3Count = personnel.filter(p => p.sp === 'SP3').length;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -57,9 +73,23 @@ export default function PersonnelPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(p => (
-              <PersonnelRow key={p.id} p={p} />
-            ))}
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ padding: 30, textAlign: 'center', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>
+                  Memuat data personel...
+                </td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ padding: 30, textAlign: 'center', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>
+                  Tidak ada personel yang cocok
+                </td>
+              </tr>
+            ) : (
+              filtered.map(p => (
+                <PersonnelRow key={p.id} p={p} />
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -70,7 +100,7 @@ export default function PersonnelPage() {
           { level: 'SP1', count: sp1Count, desc: 'Akumulasi 3–6 pelanggaran', color: '#F59E0B', bg: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)' },
           { level: 'SP2', count: sp2Count, desc: 'Akumulasi 7–11 pelanggaran', color: '#EF4444', bg: 'rgba(239,68,68,0.08)', border: 'rgba(239,68,68,0.2)' },
           { level: 'SP3', count: sp3Count, desc: 'Akumulasi ≥12 pelanggaran', color: '#A78BFA', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.2)' },
-        ].map(({ level, count, desc, color, bg, border }) => (
+        ].map(({ level, count, desc, color, border }) => (
           <div key={level} style={{ background: '#111827', border: `1px solid ${border}`, borderRadius: 10, padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{level} Aktif</span>
@@ -82,7 +112,7 @@ export default function PersonnelPage() {
         ))}
       </div>
 
-      {showModal && <PersonnelModal onClose={() => setShowModal(false)} />}
+      {showModal && <PersonnelModal onClose={() => setShowModal(false)} onSaved={fetchPersonnel} />}
     </div>
   );
 }
@@ -132,7 +162,40 @@ function PersonnelRow({ p }: { p: Personnel }) {
   );
 }
 
-function PersonnelModal({ onClose }: { onClose: () => void }) {
+function PersonnelModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [fullName, setFullName] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
+  const [department, setDepartment] = useState('');
+  const [role, setRole] = useState('Pekerja');
+  const [helmColor, setHelmColor] = useState('Kuning');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSave = async () => {
+    if (!fullName || !employeeId) {
+      setError('Nama dan ID wajib diisi');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await personnelApi.create({
+        full_name: fullName,
+        employee_id: employeeId,
+        department: department || 'Umum',
+        role: role as 'Pekerja' | 'Supervisor' | 'Safety Officer',
+        helm_color: helmColor as 'Kuning' | 'Putih' | 'Hijau',
+      });
+      onSaved();
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan';
+      setError(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
@@ -144,23 +207,40 @@ function PersonnelModal({ onClose }: { onClose: () => void }) {
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={18} /></button>
         </div>
 
+        {error && (
+          <div style={{ padding: '8px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 6 }}>
+            <p style={{ fontSize: 12, color: '#EF4444', margin: 0 }}>{error}</p>
+          </div>
+        )}
+
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-          {[
-            { label: 'Nama Lengkap', placeholder: 'Masukkan nama...' },
-            { label: 'ID Karyawan', placeholder: 'EMP-XXX' },
-            { label: 'Departemen', placeholder: 'Bongkar Muat' },
-          ].map(({ label, placeholder }) => (
-            <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</label>
-              <input
-                placeholder={placeholder}
-                style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none' }}
-              />
-            </div>
-          ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Nama Lengkap</label>
+            <input
+              value={fullName} onChange={e => setFullName(e.target.value)}
+              placeholder="Masukkan nama..."
+              style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>ID Karyawan</label>
+            <input
+              value={employeeId} onChange={e => setEmployeeId(e.target.value)}
+              placeholder="EMP-XXX"
+              style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Departemen</label>
+            <input
+              value={department} onChange={e => setDepartment(e.target.value)}
+              placeholder="Bongkar Muat"
+              style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none' }}
+            />
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Peran</label>
-            <select style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none', cursor: 'pointer' }}>
+            <select value={role} onChange={e => setRole(e.target.value)} style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none', cursor: 'pointer' }}>
               <option>Pekerja</option>
               <option>Supervisor</option>
               <option>Safety Officer</option>
@@ -168,27 +248,24 @@ function PersonnelModal({ onClose }: { onClose: () => void }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Warna Helm</label>
-            <select style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none', cursor: 'pointer' }}>
-              <option value="yellow">Kuning — Pekerja</option>
-              <option value="white">Putih — Supervisor</option>
-              <option value="green">Hijau — Safety Officer</option>
+            <select value={helmColor} onChange={e => setHelmColor(e.target.value)} style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none', cursor: 'pointer' }}>
+              <option value="Kuning">Kuning — Pekerja</option>
+              <option value="Putih">Putih — Supervisor</option>
+              <option value="Hijau">Hijau — Safety Officer</option>
             </select>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 36, height: 20, borderRadius: 10, background: '#22C55E', position: 'relative', cursor: 'pointer' }}>
-            <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, right: 2, transition: 'right 0.2s' }} />
-          </div>
-          <span style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#94A3B8' }}>Status Aktif</span>
         </div>
 
         <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
           <button onClick={onClose} style={{ flex: 1, padding: '10px', borderRadius: 8, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 13, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
             Batal
           </button>
-          <button style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: '#F97316', color: '#fff', fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: 'pointer' }}>
-            Simpan Personel
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            style={{ flex: 2, padding: '10px', borderRadius: 8, border: 'none', background: saving ? 'rgba(249,115,22,0.5)' : '#F97316', color: '#fff', fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer' }}
+          >
+            {saving ? 'Menyimpan...' : 'Simpan Personel'}
           </button>
         </div>
       </div>

@@ -1,13 +1,56 @@
 "use client";
 
+import { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, Users, FileWarning } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
 import { CameraFeed } from '@/components/shared/CameraFeed';
 import { ViolationCard } from '@/components/shared/ViolationCard';
-import { mockViolations } from '@/components/shared/mockData';
+import { analyticsApi, violationApi } from '@/src/lib/api';
+import { useWebSocket } from '@/src/lib/useWebSocket';
+import { mapViolation } from '@/src/lib/mappers';
+import type { Violation } from '@/components/shared/types';
+import type { ComplianceSummary } from '@/src/types/simapd';
 
 export default function Dashboard() {
-  const liveViolations = mockViolations.slice(0, 8);
+  const [violations, setViolations] = useState<Violation[]>([]);
+  const [summary, setSummary] = useState<ComplianceSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const { connected, recentAlerts } = useWebSocket({
+    onViolationAlert: () => {
+      // Refetch violations when new alert arrives
+      violationApi.list({ page_size: '8', page: '1' })
+        .then(res => setViolations(res.items.map(mapViolation)))
+        .catch(() => {});
+    },
+  });
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const [dashRes, vioRes] = await Promise.all([
+          analyticsApi.dashboard(),
+          violationApi.list({ page_size: '8', page: '1' }),
+        ]);
+        setSummary(dashRes.summary);
+        setViolations(vioRes.items.map(mapViolation));
+      } catch (err) {
+        console.error('Dashboard load failed:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+  const complianceRate = summary?.compliance_rate ?? 0;
+  const totalToday = summary?.total_violations_today ?? 0;
+  const linked = summary?.linked_count ?? 0;
+  const unlinked = summary?.unlinked_count ?? 0;
+  const totalLinked = `${linked}/${linked + unlinked}`;
+  const linkedPct = (linked + unlinked) > 0 ? `${Math.round(linked / (linked + unlinked) * 100)}% linked` : '0% linked';
+  const spTotal = summary?.active_sp_count ?? 0;
+  const spDetail = `SP1: ${summary?.sp1_count ?? 0} · SP2: ${summary?.sp2_count ?? 0}`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -15,19 +58,19 @@ export default function Dashboard() {
       <div style={{ display: 'flex', gap: 16 }}>
         <StatCard
           label="Tingkat Kepatuhan"
-          value="78.4%"
+          value={loading ? '—' : `${complianceRate}%`}
           subtext="Rata-rata hari ini"
-          trend="+3.2%"
-          trendUp
+          trend={connected ? '● Live' : '○ Offline'}
+          trendUp={connected}
           icon={<Shield size={18} />}
           valueColor="#22C55E"
           accentColor="#22C55E"
         />
         <StatCard
           label="Total Pelanggaran"
-          value="17"
+          value={loading ? '—' : String(totalToday)}
           subtext="Hari ini"
-          trend="+5 hari ini"
+          trend={`${totalToday} hari ini`}
           trendUp={false}
           icon={<AlertTriangle size={18} />}
           valueColor="#EF4444"
@@ -35,16 +78,16 @@ export default function Dashboard() {
         />
         <StatCard
           label="Terhubung Personel"
-          value="12/17"
-          subtext="70.6% linked"
+          value={loading ? '—' : totalLinked}
+          subtext={linkedPct}
           icon={<Users size={18} />}
           valueColor="#3B82F6"
           accentColor="#3B82F6"
         />
         <StatCard
           label="Personel Ber-SP"
-          value="3"
-          subtext="SP1: 2 · SP2: 1"
+          value={loading ? '—' : String(spTotal)}
+          subtext={spDetail}
           icon={<FileWarning size={18} />}
           valueColor="#F59E0B"
           accentColor="#F59E0B"
@@ -89,13 +132,23 @@ export default function Dashboard() {
               Live Violation Feed
             </h2>
             <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#EF4444' }}>
-              {liveViolations.length} total
+              {violations.length} total
             </span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 480, overflowY: 'auto', paddingRight: 4 }}>
-            {liveViolations.map(v => (
-              <ViolationCard key={v.id} violation={v} />
-            ))}
+            {loading ? (
+              <div style={{ padding: 20, textAlign: 'center', fontSize: 12, color: '#64748B', fontFamily: 'DM Sans, sans-serif' }}>
+                Memuat data...
+              </div>
+            ) : violations.length === 0 ? (
+              <div style={{ padding: 20, textAlign: 'center', fontSize: 12, color: '#64748B', fontFamily: 'DM Sans, sans-serif' }}>
+                Tidak ada pelanggaran hari ini
+              </div>
+            ) : (
+              violations.map(v => (
+                <ViolationCard key={v.id} violation={v} />
+              ))
+            )}
           </div>
         </div>
       </div>
