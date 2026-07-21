@@ -1,0 +1,256 @@
+
+> backend-nest@0.0.1 start:dev
+> nest start --watch
+
+[2J[3J[H[[90m10:14:55 PM[0m] Starting compilation in watch mode...
+
+[[90m10:15:04 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +30ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +36ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +109ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSpModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPersonnelModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mViolationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreamModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32mWebSocket Gateway initialized[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/logout, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPersonnelController {/api/v1/personnel}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSpController {/api/v1/sp}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/issue, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/:id/revoke, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/config, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/config, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/active, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mViolationsController {/api/v1/violations}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/link, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/links, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/link/:personnelId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/frame, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalyticsController {/api/v1/analytics}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/dashboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/export/csv, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/export/pdf, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStreamController {/api/v1/stream}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/stream/cameras, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/stream/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[StreamService] [39m[32mSubscribed: detections, heartbeat, frames[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[SeedService] [39m[32mChecking database for seed data...[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[SeedService] [39m[32mSeeding complete.[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:06 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +0ms[39m
+[32m[Nest] 148861  - [39m07/16/2026, 10:15:48 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: e87a485d-c33a-4dbe-92ef-172e28156dea | total: 1[39m
+[2J[3J[H[[90m10:16:13 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m10:16:13 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +38ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +5ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +43ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +158ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSpModule dependencies initialized[39m[38;5;3m +4ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPersonnelModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mViolationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreamModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32mWebSocket Gateway initialized[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +2ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +4ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +2ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/logout, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPersonnelController {/api/v1/personnel}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSpController {/api/v1/sp}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/issue, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/:id/revoke, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/config, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/config, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/active, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mViolationsController {/api/v1/violations}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/link, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/links, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/link/:personnelId, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/frame, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalyticsController {/api/v1/analytics}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/dashboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/export/csv, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/export/pdf, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStreamController {/api/v1/stream}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/stream/cameras, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/stream/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[StreamService] [39m[32mSubscribed: detections, heartbeat, frames[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[SeedService] [39m[32mChecking database for seed data...[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[SeedService] [39m[32mSeeding complete.[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +1ms[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:15 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 574886ef-aeda-431a-8cc2-f2cc62f6dbed | total: 1[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:16:21 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 24d2ea2e-100a-438f-be8a-5490c6d69f34 | total: 2[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:09 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 574886ef-aeda-431a-8cc2-f2cc62f6dbed | remaining: 1[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:10 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: f8c9ad48-e1f1-4a50-8326-d7858ebc53c2 | total: 2[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:10 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: f8c9ad48-e1f1-4a50-8326-d7858ebc53c2 | remaining: 1[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:10 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 32d0bba2-3b73-4258-bb00-58d9fc6d5515 | total: 2[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:21 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 32d0bba2-3b73-4258-bb00-58d9fc6d5515 | remaining: 1[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:32 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 03577014-f892-4dc5-be5c-33ddc21fb5ca | total: 2[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:32 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 03577014-f892-4dc5-be5c-33ddc21fb5ca | remaining: 1[39m
+[32m[Nest] 150096  - [39m07/16/2026, 10:19:32 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 40aa8e34-bf7e-4585-a359-d5877dd54873 | total: 2[39m
+[2J[3J[H[[90m10:26:15 PM[0m] File change detected. Starting incremental compilation...
+
+[96msrc/stream/stream.controller.ts[0m:[93m27[0m:[93m32[0m - [91merror[0m[90m TS2339: [0mProperty 'streamGateway' does not exist on type 'StreamController'.
+
+[7m27[0m       active_connections: this.streamGateway.getConnectionCount(),
+[7m  [0m [91m                               ~~~~~~~~~~~~~[0m
+
+[96msrc/stream/stream.controller.ts[0m:[93m34[0m:[93m26[0m - [91merror[0m[90m TS2304: [0mCannot find name 'Res'.
+
+[7m34[0m   async injectTestFrame(@Res() res: Response) {
+[7m  [0m [91m                         ~~~[0m
+
+[96msrc/stream/stream.controller.ts[0m:[93m60[0m:[93m10[0m - [91merror[0m[90m TS2339: [0mProperty 'streamGateway' does not exist on type 'StreamController'.
+
+[7m60[0m     this.streamGateway.broadcast(testMsg)
+[7m  [0m [91m         ~~~~~~~~~~~~~[0m
+
+[96msrc/stream/stream.controller.ts[0m:[93m62[0m:[93m21[0m - [91merror[0m[90m TS2554: [0mExpected 0 arguments, but got 1.
+
+[7m 62[0m     return res.json({
+[7m   [0m [91m                    ~[0m
+[7m 63[0m       ok:      true,
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
+[7m...[0m 
+[7m 65[0m       clients: this.streamGateway.getConnectionCount(),
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m 66[0m     })
+[7m   [0m [91m~~~~~[0m
+
+[96msrc/stream/stream.controller.ts[0m:[93m65[0m:[93m21[0m - [91merror[0m[90m TS2339: [0mProperty 'streamGateway' does not exist on type 'StreamController'.
+
+[7m65[0m       clients: this.streamGateway.getConnectionCount(),
+[7m  [0m [91m                    ~~~~~~~~~~~~~[0m
+
+[[90m10:26:15 PM[0m] Found 5 errors. Watching for file changes.
+
+[2J[3J[H[[90m10:26:35 PM[0m] File change detected. Starting incremental compilation...
+
+[[90m10:26:35 PM[0m] Found 0 errors. Watching for file changes.
+
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +20ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +26ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmCoreModule dependencies initialized[39m[38;5;3m +81ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTypeOrmModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSpModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAnalyticsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPersonnelModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mViolationsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStreamModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32mWebSocket Gateway initialized[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAuthController {/api/v1/auth}:[39m[38;5;3m +3ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/login, POST} route[39m[38;5;3m +3ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/me, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/auth/logout, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPersonnelController {/api/v1/personnel}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, PUT} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/personnel/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSpController {/api/v1/sp}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/issue, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/:id/revoke, POST} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/config, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/config, PUT} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp/active, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/sp, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mViolationsController {/api/v1/violations}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/link, POST} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/links, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/link/:personnelId, DELETE} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id/frame, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/violations/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAnalyticsController {/api/v1/analytics}:[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/dashboard, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/export/csv, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/analytics/export/pdf, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mStreamController {/api/v1/stream}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/stream/cameras, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/stream/status, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/api/v1/stream/inject-test, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[StreamService] [39m[32mSubscribed: detections, heartbeat, frames[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[SeedService] [39m[32mChecking database for seed data...[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[SeedService] [39m[32mSeeding complete.[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:37 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +1ms[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:38 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 3be61209-acdd-4c79-85ac-49ee9af0e4fb | total: 1[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:50 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 3be61209-acdd-4c79-85ac-49ee9af0e4fb | remaining: 0[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:26:50 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: de126306-cff3-4514-9197-1502df7d47fc | total: 1[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:27:04 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: de126306-cff3-4514-9197-1502df7d47fc | remaining: 0[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:27:04 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 7d6b176a-b0d4-480f-89a4-e9040aebebd6 | total: 1[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:27:07 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 99c6a99b-b707-483c-bfad-8540e435bdb7 | total: 2[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:32:05 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 99c6a99b-b707-483c-bfad-8540e435bdb7 | remaining: 1[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:32:05 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 7d6b176a-b0d4-480f-89a4-e9040aebebd6 | remaining: 0[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:32:07 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 65f6a099-bb24-48fa-a9a5-2e37d393d0c3 | total: 1[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:32:07 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 65f6a099-bb24-48fa-a9a5-2e37d393d0c3 | remaining: 0[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:32:07 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client connected: 894c75fc-dc98-46c2-a732-1b94be4ea7df | total: 1[39m
+[32m[Nest] 159200  - [39m07/16/2026, 10:40:35 PM [32m    LOG[39m [38;5;3m[StreamGateway] [39m[32m[WS] Client disconnected: 894c75fc-dc98-46c2-a732-1b94be4ea7df | remaining: 0[39m

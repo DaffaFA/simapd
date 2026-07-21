@@ -11,6 +11,7 @@ export declare class StreamService implements OnApplicationBootstrap {
     private readonly COOLDOWN_MS;
     constructor(redis: RedisService, violations: ViolationsService, gateway: StreamGateway);
     onApplicationBootstrap(): Promise<void>;
+    private onFrame;
     private onDetection;
     private onHeartbeat;
 }

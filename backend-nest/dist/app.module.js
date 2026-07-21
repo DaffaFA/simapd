@@ -18,6 +18,7 @@ const violations_module_1 = require("./violations/violations.module");
 const sp_module_1 = require("./sp/sp.module");
 const analytics_module_1 = require("./analytics/analytics.module");
 const stream_module_1 = require("./stream/stream.module");
+const storage_module_1 = require("./storage/storage.module");
 const seed_service_1 = require("./common/seed.service");
 const user_entity_1 = require("./auth/entities/user.entity");
 const sp_config_entity_1 = require("./sp/entities/sp-config.entity");
@@ -53,6 +54,7 @@ exports.AppModule = AppModule = __decorate([
             sp_module_1.SpModule,
             analytics_module_1.AnalyticsModule,
             stream_module_1.StreamModule,
+            storage_module_1.StorageModule,
         ],
         providers: [seed_service_1.SeedService],
     })

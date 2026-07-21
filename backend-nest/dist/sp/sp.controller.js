@@ -46,6 +46,9 @@ let SpController = class SpController {
         const [items, total] = await this.spService.findActiveAll(p, ps);
         return paginated_response_dto_1.PaginatedResponseDto.of(items, total, p, ps);
     }
+    async findAll(personnelId) {
+        return this.spService.findAll(personnelId);
+    }
 };
 exports.SpController = SpController;
 __decorate([
@@ -89,6 +92,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", Promise)
 ], SpController.prototype, "getActive", null);
+__decorate([
+    (0, common_1.Get)(),
+    (0, roles_decorator_1.Roles)(),
+    __param(0, (0, common_1.Query)('personnel_id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], SpController.prototype, "findAll", null);
 exports.SpController = SpController = __decorate([
     (0, swagger_1.ApiTags)('SP Management'),
     (0, swagger_1.ApiBearerAuth)(),

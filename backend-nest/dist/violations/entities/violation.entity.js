@@ -13,6 +13,7 @@ exports.Violation = void 0;
 const typeorm_1 = require("typeorm");
 const base_entity_1 = require("../../common/entities/base.entity");
 const personnel_entity_1 = require("../../personnel/entities/personnel.entity");
+const violation_link_entity_1 = require("./violation-link.entity");
 let Violation = class Violation extends base_entity_1.BaseEntity {
 };
 exports.Violation = Violation;
@@ -81,10 +82,18 @@ __decorate([
     __metadata("design:type", String)
 ], Violation.prototype, "frame_path", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ nullable: true }),
+    __metadata("design:type", String)
+], Violation.prototype, "frame_key", void 0);
+__decorate([
     (0, typeorm_1.ManyToOne)(() => personnel_entity_1.Personnel, (p) => p.violations, { nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: 'personnel_id' }),
     __metadata("design:type", personnel_entity_1.Personnel)
 ], Violation.prototype, "personnel", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => violation_link_entity_1.ViolationLink, (l) => l.violation, { cascade: true, eager: false }),
+    __metadata("design:type", Array)
+], Violation.prototype, "links", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)

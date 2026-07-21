@@ -14,6 +14,15 @@ export interface Personnel {
   role: PersonRole; helm_color: HelmColor; department: string
   is_active: boolean; notes: string | null
   violation_count: number; active_sp: SPLevel | null; created_at: string
+  updated_at?: string;
+}
+
+export interface UpdatePersonnelDto {
+  full_name?:   string
+  role?:        string
+  helm_color?:  string
+  department?:  string
+  is_active?:   boolean
 }
 
 export interface Violation {
@@ -23,6 +32,7 @@ export interface Violation {
   missing_shoes: boolean; missing_ppe_list: PPEItem[]; confidence: number
   bbox: [number, number, number, number]; frame_path: string | null
   personnel_id: string | null; personnel_name: string | null; linked_at: string | null
+  created_at?: string
 }
 
 export interface SpRecord {

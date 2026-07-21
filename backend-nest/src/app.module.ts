@@ -10,6 +10,7 @@ import { ViolationsModule } from './violations/violations.module';
 import { SpModule } from './sp/sp.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { StreamModule } from './stream/stream.module';
+import { StorageModule } from './storage/storage.module';
 
 import { SeedService } from './common/seed.service';
 import { User } from './auth/entities/user.entity';
@@ -43,6 +44,7 @@ import { Personnel } from './personnel/entities/personnel.entity';
     SpModule,
     AnalyticsModule,
     StreamModule,
+    StorageModule,
   ],
   providers: [SeedService],
 })

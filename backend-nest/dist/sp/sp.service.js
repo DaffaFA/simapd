@@ -130,6 +130,10 @@ let SpService = class SpService {
             take: pageSize,
         });
     }
+    async findAll(personnelId) {
+        const where = personnelId ? { personnel_id: personnelId } : {};
+        return this.spRepo.find({ where, order: { issued_at: 'DESC' }, relations: { personnel: true } });
+    }
     async expireOutdated() {
         const result = await this.spRepo.createQueryBuilder()
             .update(sp_record_entity_1.SpRecord)

@@ -7,13 +7,13 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useWebSocketAdapter(new WsAdapter(app));
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }),
   );
   
   const cfg = app.get(ConfigService);
   app.enableCors({ origin: cfg.get('cors.origin'), credentials: true });
+  app.useWebSocketAdapter(new WsAdapter(app));
   app.setGlobalPrefix('api/v1', { exclude: ['health'] });
 
   const doc = SwaggerModule.createDocument(

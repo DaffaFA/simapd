@@ -12,4 +12,26 @@ export interface DetectionMessage {
   bbox:         [number, number, number, number];
   camera_id:    string;
   confidence:   number;
+  frame_path?:  string | null;
+  frame_key?:   string | null;
+}
+
+export interface FrameMessage {
+  event:      'frame'
+  camera_id:  string
+  frame_b64:  string          // JPEG base64
+  width:      number          // frame width (854)
+  height:     number          // frame height (480 ish)
+  detections: FrameDetection[]
+  timestamp:  string
+}
+
+export interface FrameDetection {
+  track_id:    number
+  bbox:        [number, number, number, number]  // [x1,y1,x2,y2] scaled to frame
+  helm_color:  string
+  role_label:  string
+  is_compliant: boolean
+  missing_ppe: string[]
+  confidence?: number
 }

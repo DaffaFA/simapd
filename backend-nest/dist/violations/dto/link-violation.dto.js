@@ -15,12 +15,16 @@ class LinkViolationDto {
 }
 exports.LinkViolationDto = LinkViolationDto;
 __decorate([
-    (0, class_validator_1.IsUUID)(),
-    __metadata("design:type", String)
-], LinkViolationDto.prototype, "personnel_id", void 0);
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.ArrayMinSize)(1),
+    (0, class_validator_1.ArrayMaxSize)(10),
+    (0, class_validator_1.IsUUID)('4', { each: true }),
+    __metadata("design:type", Array)
+], LinkViolationDto.prototype, "personnel_ids", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(500),
     __metadata("design:type", String)
 ], LinkViolationDto.prototype, "notes", void 0);
 //# sourceMappingURL=link-violation.dto.js.map

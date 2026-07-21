@@ -2,7 +2,7 @@ import { Injectable, OnApplicationBootstrap, Logger, Inject, forwardRef } from '
 import { RedisService } from '../redis/redis.service';
 import { ViolationsService } from '../violations/violations.service';
 import { StreamGateway } from './stream.gateway';
-import { DetectionMessage } from '../common/types/detection.types';
+import { DetectionMessage, FrameMessage } from '../common/types/detection.types';
 
 @Injectable()
 export class StreamService implements OnApplicationBootstrap {
@@ -19,7 +19,17 @@ export class StreamService implements OnApplicationBootstrap {
   async onApplicationBootstrap() {
     await this.redis.subscribe('detections', raw => this.onDetection(raw));
     await this.redis.subscribe('heartbeat', raw => this.onHeartbeat(raw));
-    this.logger.log('Subscribed: detections, heartbeat');
+    await this.redis.subscribe('frames', raw => this.onFrame(raw));
+    this.logger.log('Subscribed: detections, heartbeat, frames');
+  }
+
+  private onFrame(raw: string) {
+    try {
+      const msg: FrameMessage = JSON.parse(raw);
+      this.gateway.broadcast(msg);
+    } catch {
+      // ignore parse errors
+    }
   }
 
   private async onDetection(raw: string) {
@@ -53,6 +63,8 @@ export class StreamService implements OnApplicationBootstrap {
           bbox_y1: msg.bbox[1],
           bbox_x2: msg.bbox[2],
           bbox_y2: msg.bbox[3],
+          frame_path: msg.frame_path ?? undefined,
+          frame_key: msg.frame_key ?? undefined,
         });
         
         this.gateway.broadcast({

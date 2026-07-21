@@ -51,4 +51,10 @@ export class SpController {
     const [items, total] = await this.spService.findActiveAll(p, ps);
     return PaginatedResponseDto.of(items, total, p, ps);
   }
+
+  @Get()
+  @Roles() // Allow any authenticated user
+  async findAll(@Query('personnel_id') personnelId?: string) {
+    return this.spService.findAll(personnelId);
+  }
 }

@@ -11,4 +11,5 @@ export declare class SpController {
     getConfig(): Promise<import("./entities/sp-config.entity").SpConfig>;
     updateConfig(dto: SpConfigUpdateDto, user: User): Promise<import("./entities/sp-config.entity").SpConfig>;
     getActive(page?: string, pageSize?: string): Promise<PaginatedResponseDto<import("./entities/sp-record.entity").SpRecord>>;
+    findAll(personnelId?: string): Promise<import("./entities/sp-record.entity").SpRecord[]>;
 }

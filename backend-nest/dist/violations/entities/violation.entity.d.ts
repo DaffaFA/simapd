@@ -1,5 +1,6 @@
 import { BaseEntity } from '../../common/entities/base.entity';
 import { Personnel } from '../../personnel/entities/personnel.entity';
+import { ViolationLink } from './violation-link.entity';
 export declare class Violation extends BaseEntity {
     violation_code: string;
     track_id: number;
@@ -17,7 +18,9 @@ export declare class Violation extends BaseEntity {
     bbox_x2: number;
     bbox_y2: number;
     frame_path: string;
+    frame_key: string;
     personnel: Personnel;
+    links: ViolationLink[];
     personnel_id: string;
     linked_by: string;
     linked_at: Date;

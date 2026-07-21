@@ -1,4 +1,4 @@
 export declare class LinkViolationDto {
-    personnel_id: string;
+    personnel_ids: string[];
     notes?: string;
 }

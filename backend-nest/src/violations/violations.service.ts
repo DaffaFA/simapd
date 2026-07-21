@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Violation } from './entities/violation.entity';
+import { ViolationLink } from './entities/violation-link.entity';
 import { SpService } from '../sp/sp.service';
 import { CreateViolationInternalDto } from './dto/create-violation-internal.dto';
 import { ViolationFilterDto } from './dto/violation-filter.dto';
@@ -12,6 +13,7 @@ import { ViolationResponseDto } from './dto/violation-response.dto';
 export class ViolationsService {
   constructor(
     @InjectRepository(Violation) private repo: Repository<Violation>,
+    @InjectRepository(ViolationLink) private linkRepo: Repository<ViolationLink>,
     private spService: SpService,
   ) {}
 
@@ -66,7 +68,10 @@ export class ViolationsService {
     if (filter.missing_ppe === 'sepatu') qb.andWhere('v.missing_shoes = true');
     if (filter.is_linked === true) qb.andWhere('v.personnel_id IS NOT NULL');
     if (filter.is_linked === false) qb.andWhere('v.personnel_id IS NULL');
-    if (filter.personnel_id) qb.andWhere('v.personnel_id = :pid', { pid: filter.personnel_id });
+    
+    if (filter.personnel_id) {
+      qb.innerJoin('v.links', 'link', 'link.personnel_id = :pid', { pid: filter.personnel_id });
+    }
     
     const p = filter.page ?? 1;
     const ps = filter.page_size ?? 20;
@@ -78,30 +83,75 @@ export class ViolationsService {
   }
 
   async findOne(id: string): Promise<Violation> {
-    const v = await this.repo.findOne({ where: { id }, relations: { personnel: true } });
+    const v = await this.repo.findOne({ 
+      where: { id }, 
+      relations: { links: { personnel: true } }
+    });
     if (!v) throw new NotFoundException();
     return v;
   }
 
-  async linkToPersonnel(id: string, dto: LinkViolationDto, linkedBy: string): Promise<Violation> {
-    const v = await this.findOne(id);
-    v.personnel_id = dto.personnel_id;
-    v.linked_by = linkedBy;
-    v.linked_at = new Date();
-    v.notes = dto.notes ?? v.notes;
-    await this.repo.save(v);
-    
-    // Auto-SP setelah link
-    await this.spService.checkAndAutoIssueSp(dto.personnel_id, linkedBy, id);
-    return this.findOne(id);
+  async linkToPersonnel(
+    violationId: string,
+    dto: LinkViolationDto,
+    linkedBy: string,
+  ): Promise<ViolationLink[]> {
+    const violation = await this.findOne(violationId);
+    if (!violation) throw new NotFoundException('Violation tidak ditemukan');
+
+    const createdLinks: ViolationLink[] = [];
+    const errors: string[] = [];
+
+    for (const personnelId of dto.personnel_ids) {
+      // Cek apakah link sudah ada
+      const existing = await this.linkRepo.findOne({
+        where: { violation_id: violationId, personnel_id: personnelId }
+      });
+      if (existing) {
+        errors.push(`Personnel ${personnelId} sudah di-link ke violation ini`);
+        continue;
+      }
+
+      const link = this.linkRepo.create({
+        violation_id: violationId,
+        personnel_id: personnelId,
+        linked_by: linkedBy,
+        notes: dto.notes,
+      });
+      createdLinks.push(await this.linkRepo.save(link));
+
+      // Trigger SP check untuk setiap personnel yang di-link
+      try {
+        await this.spService.checkAndAutoIssueSp(personnelId, linkedBy, violationId);
+      } catch (e) {
+        console.error(`SP check failed untuk personnel ${personnelId}:`, e);
+      }
+    }
+
+    if (errors.length > 0 && createdLinks.length === 0) {
+      throw new ConflictException(errors.join('; '));
+    }
+
+    return createdLinks;
   }
 
-  async unlinkPersonnel(id: string): Promise<Violation> {
-    const v = await this.findOne(id);
-    v.personnel_id = null as any;
-    v.linked_by = null as any;
-    v.linked_at = null as any;
-    return this.repo.save(v);
+  async unlinkFromPersonnel(
+    violationId: string,
+    personnelId: string,
+  ): Promise<void> {
+    const link = await this.linkRepo.findOne({
+      where: { violation_id: violationId, personnel_id: personnelId }
+    });
+    if (!link) throw new NotFoundException('Link tidak ditemukan');
+    await this.linkRepo.remove(link);
+  }
+
+  async getLinksForViolation(violationId: string): Promise<ViolationLink[]> {
+    return this.linkRepo.find({
+      where: { violation_id: violationId },
+      relations: { personnel: true },
+      order: { linked_at: 'ASC' },
+    });
   }
 
   async remove(id: string): Promise<void> {
@@ -125,7 +175,7 @@ export class ViolationsService {
       missing_ppe_list: ViolationsService.buildMissingList(v),
       confidence: v.confidence,
       bbox: [v.bbox_x1, v.bbox_y1, v.bbox_x2, v.bbox_y2],
-      frame_path: v.frame_path ?? null,
+      frame_path: v.frame_key ?? v.frame_path ?? null, // Fallback ke frame_path jika frame_key gak ada
       personnel_id: v.personnel_id ?? null,
       personnel_name: v.personnel?.full_name ?? null,
       linked_at: v.linked_at ?? null,

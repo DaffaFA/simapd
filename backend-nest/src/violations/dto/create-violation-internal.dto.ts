@@ -13,4 +13,5 @@ export class CreateViolationInternalDto {
   bbox_x2!: number;
   bbox_y2!: number;
   frame_path?: string;
+  frame_key?: string;
 }

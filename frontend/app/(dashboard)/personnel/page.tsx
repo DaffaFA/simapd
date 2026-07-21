@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Plus, Edit2, Eye, X } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { HelmDot } from '@/components/shared/HelmDot';
 import { SPBadge } from '@/components/shared/StatusBadge';
 import { MiniProgressBar } from '@/components/shared/MiniProgressBar';
@@ -12,6 +14,7 @@ import type { Personnel } from '@/components/shared/types';
 export default function PersonnelPage() {
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [editingPersonnel, setEditingPersonnel] = useState<Personnel | null>(null);
   const [personnel, setPersonnel] = useState<Personnel[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +55,7 @@ export default function PersonnelPage() {
           />
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={() => { setEditingPersonnel(null); setShowModal(true); }}
           style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#F97316', color: '#fff', fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}
         >
           <Plus size={15} />
@@ -87,7 +90,7 @@ export default function PersonnelPage() {
               </tr>
             ) : (
               filtered.map(p => (
-                <PersonnelRow key={p.id} p={p} />
+                <PersonnelRow key={p.id} p={p} onEdit={() => { setEditingPersonnel(p); setShowModal(true); }} />
               ))
             )}
           </tbody>
@@ -112,12 +115,13 @@ export default function PersonnelPage() {
         ))}
       </div>
 
-      {showModal && <PersonnelModal onClose={() => setShowModal(false)} onSaved={fetchPersonnel} />}
+      {showModal && <PersonnelModal initialData={editingPersonnel} onClose={() => { setShowModal(false); setEditingPersonnel(null); }} onSaved={fetchPersonnel} />}
     </div>
   );
 }
 
-function PersonnelRow({ p }: { p: Personnel }) {
+function PersonnelRow({ p, onEdit }: { p: Personnel; onEdit: () => void }) {
+  const router = useRouter();
   return (
     <tr
       style={{ borderBottom: '1px solid #1E2D3D', transition: 'background 0.15s' }}
@@ -128,7 +132,14 @@ function PersonnelRow({ p }: { p: Personnel }) {
         <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#64748B' }}>{p.employeeId}</span>
       </td>
       <td style={{ padding: '10px 14px' }}>
-        <span style={{ fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0' }}>{p.name}</span>
+        <Link
+          href={`/personnel/${p.id}`}
+          style={{ fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#3B82F6', textDecoration: 'none' }}
+          onMouseEnter={e => { (e.target as HTMLElement).style.textDecoration = 'underline'; }}
+          onMouseLeave={e => { (e.target as HTMLElement).style.textDecoration = 'none'; }}
+        >
+          {p.name}
+        </Link>
       </td>
       <td style={{ padding: '10px 14px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -148,11 +159,11 @@ function PersonnelRow({ p }: { p: Personnel }) {
       </td>
       <td style={{ padding: '10px 14px' }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
+          <button onClick={() => router.push(`/personnel/${p.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', textDecoration: 'none' }}>
             <Eye size={11} />
             Detail
           </button>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(249,115,22,0.25)', background: 'rgba(249,115,22,0.08)', color: '#F97316', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
+          <button onClick={onEdit} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(249,115,22,0.25)', background: 'rgba(249,115,22,0.08)', color: '#F97316', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
             <Edit2 size={11} />
             Edit
           </button>
@@ -162,12 +173,12 @@ function PersonnelRow({ p }: { p: Personnel }) {
   );
 }
 
-function PersonnelModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
-  const [fullName, setFullName] = useState('');
-  const [employeeId, setEmployeeId] = useState('');
-  const [department, setDepartment] = useState('');
-  const [role, setRole] = useState('Pekerja');
-  const [helmColor, setHelmColor] = useState('Kuning');
+function PersonnelModal({ initialData, onClose, onSaved }: { initialData?: Personnel | null; onClose: () => void; onSaved: () => void }) {
+  const [fullName, setFullName] = useState(initialData?.name || '');
+  const [employeeId, setEmployeeId] = useState(initialData?.employeeId || '');
+  const [department, setDepartment] = useState(initialData?.department || '');
+  const [role, setRole] = useState(initialData?.role || 'Pekerja');
+  const [helmColor, setHelmColor] = useState(initialData?.helmColor || 'Kuning');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -179,13 +190,23 @@ function PersonnelModal({ onClose, onSaved }: { onClose: () => void; onSaved: ()
     setSaving(true);
     setError('');
     try {
-      await personnelApi.create({
-        full_name: fullName,
-        employee_id: employeeId,
-        department: department || 'Umum',
-        role: role as 'Pekerja' | 'Supervisor' | 'Safety Officer',
-        helm_color: helmColor as 'Kuning' | 'Putih' | 'Hijau',
-      });
+      if (initialData) {
+        await personnelApi.update(initialData.id, {
+          full_name: fullName,
+          employee_id: employeeId,
+          department: department || 'Umum',
+          role: role as 'Pekerja' | 'Supervisor' | 'Safety Officer',
+          helm_color: helmColor as 'Kuning' | 'Putih' | 'Hijau',
+        });
+      } else {
+        await personnelApi.create({
+          full_name: fullName,
+          employee_id: employeeId,
+          department: department || 'Umum',
+          role: role as 'Pekerja' | 'Supervisor' | 'Safety Officer',
+          helm_color: helmColor as 'Kuning' | 'Putih' | 'Hijau',
+        });
+      }
       onSaved();
       onClose();
     } catch (err: unknown) {
@@ -203,7 +224,7 @@ function PersonnelModal({ onClose, onSaved }: { onClose: () => void; onSaved: ()
     >
       <div style={{ background: '#111827', border: '1px solid #1E2D3D', borderRadius: 12, padding: 24, width: 460, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 style={{ fontSize: 15, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0 }}>Tambah Personel</h3>
+          <h3 style={{ fontSize: 15, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0 }}>{initialData ? 'Edit Personel' : 'Tambah Personel'}</h3>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={18} /></button>
         </div>
 

@@ -30,9 +30,39 @@ let StreamController = class StreamController {
     }
     getStatus() {
         return {
-            ws_clients: this.gateway.getConnectionCount(),
+            active_connections: this.gateway.getConnectionCount(),
+            server_time: new Date().toISOString()
+        };
+    }
+    async injectTestFrame(res) {
+        const tinyRedJpeg = '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8U' +
+            'HRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgN' +
+            'DRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy' +
+            'MjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABgUE/8QAIhAA' +
+            'AgIBBQEBAAAAAAAAAAAAAQIDBAURBhITFP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEA' +
+            'AAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDKtWrVq//Z';
+        const testMsg = {
+            event: 'frame',
+            camera_id: 'TEST-INJECT',
+            frame_b64: tinyRedJpeg,
+            width: 1,
+            height: 1,
+            detections: [{
+                    track_id: 99,
+                    bbox: [0, 0, 100, 200],
+                    helm_color: 'Kuning',
+                    role_label: 'Pekerja',
+                    is_compliant: false,
+                    missing_ppe: ['helm'],
+                }],
             timestamp: new Date().toISOString(),
         };
+        this.gateway.broadcast(testMsg);
+        return res.json({
+            ok: true,
+            message: 'Test frame dikirim ke semua WS clients',
+            clients: this.gateway.getConnectionCount(),
+        });
     }
 };
 exports.StreamController = StreamController;
@@ -48,6 +78,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], StreamController.prototype, "getStatus", null);
+__decorate([
+    (0, common_1.Get)('inject-test'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], StreamController.prototype, "injectTestFrame", null);
 exports.StreamController = StreamController = __decorate([
     (0, swagger_1.ApiTags)('Stream'),
     (0, swagger_1.ApiBearerAuth)(),

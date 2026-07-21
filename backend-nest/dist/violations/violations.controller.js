@@ -16,8 +16,8 @@ exports.ViolationsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const fs = require("fs");
-const path = require("path");
 const violations_service_1 = require("./violations.service");
+const storage_service_1 = require("../storage/storage.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
 const roles_decorator_1 = require("../auth/decorators/roles.decorator");
@@ -27,8 +27,9 @@ const violation_filter_dto_1 = require("./dto/violation-filter.dto");
 const link_violation_dto_1 = require("./dto/link-violation.dto");
 const paginated_response_dto_1 = require("../common/dto/paginated-response.dto");
 let ViolationsController = class ViolationsController {
-    constructor(service) {
+    constructor(service, storage) {
         this.service = service;
+        this.storage = storage;
     }
     async findAll(f) {
         const [items, total] = await this.service.findAll(f);
@@ -39,24 +40,63 @@ let ViolationsController = class ViolationsController {
         const v = await this.service.findOne(id);
         return this.service.toResponseDto(v);
     }
-    async link(id, dto, user) {
-        const linkedViolation = await this.service.linkToPersonnel(id, dto, user.username);
-        return this.service.toResponseDto(linkedViolation);
+    async linkToPersonnel(id, dto, user) {
+        const links = await this.service.linkToPersonnel(id, dto, user.username);
+        return {
+            message: `${links.length} orang berhasil di-link ke violation`,
+            linked: links.map(l => ({
+                id: l.id,
+                personnel_id: l.personnel_id,
+                linked_by: l.linked_by,
+                linked_at: l.linked_at,
+            })),
+        };
     }
-    async unlink(id) {
-        const unlinkedViolation = await this.service.unlinkPersonnel(id);
-        return this.service.toResponseDto(unlinkedViolation);
+    async getViolationLinks(id) {
+        const links = await this.service.getLinksForViolation(id);
+        return links.map(l => ({
+            id: l.id,
+            personnel_id: l.personnel_id,
+            personnel: l.personnel ? {
+                id: l.personnel.id,
+                employee_id: l.personnel.employee_id,
+                full_name: l.personnel.full_name,
+                role: l.personnel.role,
+                department: l.personnel.department,
+            } : null,
+            linked_by: l.linked_by,
+            linked_at: l.linked_at,
+            notes: l.notes,
+        }));
     }
-    async getFrame(id, res) {
+    async unlinkFromPersonnel(id, personnelId) {
+        await this.service.unlinkFromPersonnel(id, personnelId);
+        return { message: 'Link berhasil dihapus' };
+    }
+    async getViolationFrame(id, res) {
         const violation = await this.service.findOne(id);
-        if (!violation.frame_path) {
-            throw new common_1.NotFoundException('Frame path is null');
+        if (!violation)
+            throw new common_1.NotFoundException('Violation tidak ditemukan');
+        if (violation.frame_key) {
+            try {
+                const url = await this.storage.getPresignedUrl(violation.frame_key);
+                res.redirect(302, url);
+            }
+            catch (err) {
+                throw new common_1.NotFoundException('Gagal memuat frame dari storage');
+            }
+            return;
         }
-        const filePath = path.resolve(violation.frame_path);
-        if (!fs.existsSync(filePath)) {
-            throw new common_1.NotFoundException('Frame file not found on disk');
+        if (violation.frame_path) {
+            if (!fs.existsSync(violation.frame_path)) {
+                throw new common_1.NotFoundException('File frame tidak ditemukan di disk');
+            }
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Content-Disposition', `inline; filename="violation_${id}.jpg"`);
+            fs.createReadStream(violation.frame_path).pipe(res);
+            return;
         }
-        res.sendFile(filePath);
+        throw new common_1.NotFoundException('Frame tidak tersedia untuk violation ini');
     }
     async remove(id) {
         return this.service.remove(id);
@@ -88,24 +128,33 @@ __decorate([
     __metadata("design:paramtypes", [String, link_violation_dto_1.LinkViolationDto,
         user_entity_1.User]),
     __metadata("design:returntype", Promise)
-], ViolationsController.prototype, "link", null);
+], ViolationsController.prototype, "linkToPersonnel", null);
 __decorate([
-    (0, common_1.Delete)(':id/link'),
-    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
-    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, common_1.Get)(':id/links'),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
-], ViolationsController.prototype, "unlink", null);
+], ViolationsController.prototype, "getViolationLinks", null);
+__decorate([
+    (0, common_1.Delete)(':id/link/:personnelId'),
+    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Param)('personnelId', common_1.ParseUUIDPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], ViolationsController.prototype, "unlinkFromPersonnel", null);
 __decorate([
     (0, common_1.Get)(':id/frame'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
-], ViolationsController.prototype, "getFrame", null);
+], ViolationsController.prototype, "getViolationFrame", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
@@ -121,6 +170,7 @@ exports.ViolationsController = ViolationsController = __decorate([
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Controller)('violations'),
-    __metadata("design:paramtypes", [violations_service_1.ViolationsService])
+    __metadata("design:paramtypes", [violations_service_1.ViolationsService,
+        storage_service_1.StorageService])
 ], ViolationsController);
 //# sourceMappingURL=violations.controller.js.map

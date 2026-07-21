@@ -30,7 +30,16 @@ let StreamService = StreamService_1 = class StreamService {
     async onApplicationBootstrap() {
         await this.redis.subscribe('detections', raw => this.onDetection(raw));
         await this.redis.subscribe('heartbeat', raw => this.onHeartbeat(raw));
-        this.logger.log('Subscribed: detections, heartbeat');
+        await this.redis.subscribe('frames', raw => this.onFrame(raw));
+        this.logger.log('Subscribed: detections, heartbeat, frames');
+    }
+    onFrame(raw) {
+        try {
+            const msg = JSON.parse(raw);
+            this.gateway.broadcast(msg);
+        }
+        catch {
+        }
     }
     async onDetection(raw) {
         let msg;
@@ -61,6 +70,8 @@ let StreamService = StreamService_1 = class StreamService {
                     bbox_y1: msg.bbox[1],
                     bbox_x2: msg.bbox[2],
                     bbox_y2: msg.bbox[3],
+                    frame_path: msg.frame_path ?? undefined,
+                    frame_key: msg.frame_key ?? undefined,
                 });
                 this.gateway.broadcast({
                     event: 'violation_alert',

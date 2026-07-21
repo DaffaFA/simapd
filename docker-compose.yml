@@ -29,75 +29,146 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+  
+  redisinsight:
+    image: redis/redisinsight:latest
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    restart: always
 
-  # backend:
-  #   build:
-  #     context: ./backend-nest
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   env_file: ./backend-nest/.env
-  #   environment:
-  #     DATABASE_HOST: postgres
-  #     REDIS_URL: redis://redis:6379
-  #   depends_on:
-  #     postgres: { condition: service_healthy }
-  #     redis:    { condition: service_healthy }
-  #   volumes:
-  #     - violation_frames:/app/frames
-  #   healthcheck:
-  #     test: ['CMD-SHELL', 'wget -qO- http://localhost:3001/health || exit 1']
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 3
-  #   # Port TIDAK di-expose ke host — akses via NGINX
+  rustfs-init:
+    image: alpine
+    volumes:
+      - rustfs_data:/data/rustfs0
+    command: sh -c "chown -R 10001:10001 /data/rustfs0 && echo 'RustFS permissions OK'"
+    restart: "no"
 
-  # ai-service:
-  #   build:
-  #     context: ./ai-service
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   env_file: ./ai-service/.env
-  #   environment:
-  #     REDIS_URL: redis://redis:6379
-  #   depends_on:
-  #     redis: { condition: service_healthy }
-  #   volumes:
-  #     - ./ai-service/models:/app/models:ro   # YOLO .pt file (read-only)
-  #     - violation_frames:/app/captures        # shared frame captures
-  #   # Uncomment untuk GPU:
-  #   # deploy:
-  #   #   resources:
-  #   #     reservations:
-  #   #       devices:
-  #   #         - driver: nvidia
-  #   #           count: 1
-  #   #           capabilities: [gpu]
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: simapd-rustfs
+    depends_on:
+      rustfs-init:
+        condition: service_completed_successfully
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - RUSTFS_VOLUMES=/data/rustfs0
+      - RUSTFS_ADDRESS=0.0.0.0:9000
+      - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_ACCESS_KEY=rustfsadmin
+      - RUSTFS_SECRET_KEY=rustfsadmin
+      - RUSTFS_UNSAFE_BYPASS_DISK_CHECK=true
+    volumes:
+      - rustfs_data:/data/rustfs0
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   environment:
-  #     NEXT_PUBLIC_API_URL: http://localhost/api/v1
-  #     NEXT_PUBLIC_WS_URL:  ws://localhost
-  #   depends_on:
-  #     backend: { condition: service_healthy }
-  #   # Port TIDAK di-expose ke host — akses via NGINX
+  backend:
+    build:
+      context: ./backend-nest
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./backend-nest/.env
+    environment:
+      DATABASE_HOST: postgres
+      REDIS_URL: redis://redis:6379
+      RUSTFS_ENDPOINT: http://rustfs:9000
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: rustfsadmin
+      RUSTFS_BUCKET: simapd-frames
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis:    { condition: service_healthy }
+      rustfs:   { condition: service_healthy }
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3001/health || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    # Port TIDAK di-expose ke host — akses via NGINX
 
-  # nginx:
-  #   image: nginx:1.25-alpine
-  #   restart: unless-stopped
-  #   ports:
-  #     - '80:80'
-  #     - '443:443'
-  #   volumes:
-  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-  #   depends_on:
-  #     - backend
-  #     - frontend
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./ai-service/.env
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - YOLO_MODEL_PATH=models/simapd_yolov8m_sh17_DEPLOY.pt
+      - USE_SAHI=false
+      - YOLO_CONFIDENCE=0.40
+      - SAHI_SLICE_HEIGHT=512
+      - SAHI_SLICE_WIDTH=512
+      - SAHI_OVERLAP=0.25
+      - CAPTURES_DIR=/app/captures
+
+      # ── PILIH SALAH SATU: ────────────────────────────────────────────────────
+
+      # Opsi A: Single camera (mode lama)
+      # - CAMERA_ID=CAM-01
+      # - CAMERA_RTSP_URL=rtsp://user:pass@192.168.1.100:554/stream
+
+      # Opsi B: Multi-camera (baru)
+      # - CAMERAS=[{"id":"CAM-01","rtsp_url":"rtsp://user:pass@192.168.1.100:554/stream"},{"id":"CAM-02","rtsp_url":"rtsp://user:pass@192.168.1.101:554/stream"}]
+
+      # Opsi C: Demo mode (video files)
+      - DEMO_MODE=true
+      - VIDEO_DIR=/app/videos
+      - DEMO_LOOP=true
+      - RUSTFS_ENDPOINT=http://rustfs:9000
+      - RUSTFS_ACCESS_KEY=rustfsadmin
+      - RUSTFS_SECRET_KEY=rustfsadmin
+      - RUSTFS_BUCKET=simapd-frames
+    depends_on:
+      redis: { condition: service_healthy }
+      rustfs: { condition: service_healthy }
+    volumes:
+      - ./ai-service/models:/app/models:ro   # YOLO .pt file (read-only)
+      - ./videos:/app/videos:ro   # ← baru: mount folder videos (read-only)
+    # Uncomment untuk GPU:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost/api/v1
+      NEXT_PUBLIC_WS_URL:  ws://localhost
+    depends_on:
+      backend: { condition: service_healthy }
+    # Port TIDAK di-expose ke host — akses via NGINX
+
+  nginx:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
 
 volumes:
   pgdata:
   redisdata:
-  violation_frames:    # shared antara backend dan ai-service
+  rustfs_data:

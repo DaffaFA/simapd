@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [summary, setSummary] = useState<ComplianceSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { connected, recentAlerts } = useWebSocket({
+  const { connected, recentAlerts, lastDetections } = useWebSocket({
     onViolationAlert: () => {
       // Refetch violations when new alert arrives
       violationApi.list({ page_size: '8', page: '1' })
@@ -122,7 +122,7 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-          <CameraFeed />
+          <CameraFeed detections={lastDetections} />
         </div>
 
         {/* Live Violation Feed — 40% */}

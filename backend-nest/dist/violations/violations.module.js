@@ -10,6 +10,7 @@ exports.ViolationsModule = void 0;
 const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const violation_entity_1 = require("./entities/violation.entity");
+const violation_link_entity_1 = require("./entities/violation-link.entity");
 const violations_service_1 = require("./violations.service");
 const violations_controller_1 = require("./violations.controller");
 const sp_module_1 = require("../sp/sp.module");
@@ -18,7 +19,7 @@ let ViolationsModule = class ViolationsModule {
 exports.ViolationsModule = ViolationsModule;
 exports.ViolationsModule = ViolationsModule = __decorate([
     (0, common_1.Module)({
-        imports: [typeorm_1.TypeOrmModule.forFeature([violation_entity_1.Violation]), sp_module_1.SpModule],
+        imports: [typeorm_1.TypeOrmModule.forFeature([violation_entity_1.Violation, violation_link_entity_1.ViolationLink]), sp_module_1.SpModule],
         controllers: [violations_controller_1.ViolationsController],
         providers: [violations_service_1.ViolationsService],
         exports: [violations_service_1.ViolationsService],

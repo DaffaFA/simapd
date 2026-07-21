@@ -1,4 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -24,8 +25,45 @@ export class StreamController {
   @Get('status')
   getStatus() {
     return {
-      ws_clients: this.gateway.getConnectionCount(),
-      timestamp: new Date().toISOString(),
-    };
+      active_connections: this.gateway.getConnectionCount(),
+      server_time: new Date().toISOString()
+    }
+  }
+
+  @Get('inject-test')
+  @UseGuards(JwtAuthGuard)
+  async injectTestFrame(@Res() res: Response) {
+    const tinyRedJpeg =
+      '/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8U' +
+      'HRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgN' +
+      'DRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIy' +
+      'MjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAABgUE/8QAIhAA' +
+      'AgIBBQEBAAAAAAAAAAAAAQIDBAURBhITFP/EABQBAQAAAAAAAAAAAAAAAAAAAAD/xAAUEQEA' +
+      'AAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwDKtWrVq//Z'
+
+    const testMsg = {
+      event:      'frame',
+      camera_id:  'TEST-INJECT',
+      frame_b64:  tinyRedJpeg,
+      width:      1,
+      height:     1,
+      detections: [{
+        track_id:     99,
+        bbox:         [0, 0, 100, 200],
+        helm_color:   'Kuning',
+        role_label:   'Pekerja',
+        is_compliant: false,
+        missing_ppe:  ['helm'],
+      }],
+      timestamp:  new Date().toISOString(),
+    }
+
+    this.gateway.broadcast(testMsg)
+
+    return res.json({
+      ok:      true,
+      message: 'Test frame dikirim ke semua WS clients',
+      clients: this.gateway.getConnectionCount(),
+    })
   }
 }

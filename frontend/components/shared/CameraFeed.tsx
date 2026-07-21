@@ -1,4 +1,9 @@
 import { useEffect, useState } from 'react';
+import type { DetectionMsg } from '@/src/types/simapd';
+
+interface CameraFeedProps {
+  detections?: DetectionMsg[];
+}
 
 interface BoundingBoxData {
   id: string;
@@ -17,6 +22,13 @@ const staticBoxes: BoundingBoxData[] = [
   { id: '2', x: 32, y: 22, w: 12, h: 35, violation: false, trackId: 'TRK-008', role: 'Supervisor', helmColor: '#E2E8F0' },
   { id: '3', x: 58, y: 30, w: 13, h: 36, violation: false, trackId: 'TRK-019', role: 'Safety Officer', helmColor: '#22C55E' },
 ];
+
+const HELM_COLOR_MAP: Record<string, string> = {
+  'Kuning': '#EAB308',
+  'Putih': '#E2E8F0',
+  'Hijau': '#22C55E',
+  'Unknown': '#94A3B8'
+};
 
 function GridOverlay() {
   const lines = [];
@@ -82,9 +94,10 @@ function BoundingBox({ box }: { box: BoundingBoxData }) {
   );
 }
 
-export function CameraFeed() {
+export function CameraFeed({ detections = [] }: CameraFeedProps) {
   const [time, setTime] = useState('');
   const [blinkOn, setBlinkOn] = useState(true);
+  const [activeBoxes, setActiveBoxes] = useState<BoundingBoxData[]>([]);
 
   useEffect(() => {
     const tick = () => setTime(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -97,6 +110,52 @@ export function CameraFeed() {
     const id = setInterval(() => setBlinkOn(v => !v), 800);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (detections.length === 0) {
+      setActiveBoxes([]);
+      return;
+    }
+
+    // Deduplicate by track_id, keeping only the most recent (which appears first in lastDetections since it unshifts)
+    const latestByTrackId = new Map<number, DetectionMsg>();
+    const now = Date.now();
+
+    for (const d of detections) {
+      if (!latestByTrackId.has(d.track_id)) {
+        // Parse timestamp and check if it's recent (within 2 seconds to handle network latency + 10fps stream)
+        const detTime = new Date(d.timestamp).getTime();
+        if (now - detTime < 2000) {
+          latestByTrackId.set(d.track_id, d);
+        }
+      }
+    }
+
+    const newBoxes = Array.from(latestByTrackId.values()).map(d => {
+      const [xmin, ymin, xmax, ymax] = d.bbox;
+      const wPixel = xmax - xmin;
+      const hPixel = ymax - ymin;
+      return {
+        id: String(d.track_id),
+        x: (xmin / 1920) * 100,
+        y: (ymin / 1080) * 100,
+        w: (wPixel / 1920) * 100,
+        h: (hPixel / 1080) * 100,
+        violation: !d.is_compliant,
+        trackId: `TRK-${String(d.track_id).padStart(3, '0')}`,
+        role: d.role_label,
+        helmColor: HELM_COLOR_MAP[d.helm_color] || HELM_COLOR_MAP['Unknown']
+      };
+    });
+
+    setActiveBoxes(newBoxes);
+  }, [detections]);
+
+  // Map real detections or fallback to static mock boxes
+  const boxesToRender = activeBoxes.length > 0 ? activeBoxes : staticBoxes;
+
+  const totalDetected = boxesToRender.length;
+  const totalViolations = boxesToRender.filter(b => b.violation).length;
 
   return (
     <div
@@ -111,14 +170,16 @@ export function CameraFeed() {
     >
       <GridOverlay />
 
-      {/* silhouette shapes */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.07 }}>
-        <rect x="8%" y="28%" width="14%" height="38%" rx="2" fill="#E2E8F0" />
-        <rect x="32%" y="22%" width="12%" height="35%" rx="2" fill="#E2E8F0" />
-        <rect x="58%" y="30%" width="13%" height="36%" rx="2" fill="#E2E8F0" />
-      </svg>
+      {/* silhouette shapes (only show if no live data) */}
+      {detections.length === 0 && (
+        <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.07 }}>
+          <rect x="8%" y="28%" width="14%" height="38%" rx="2" fill="#E2E8F0" />
+          <rect x="32%" y="22%" width="12%" height="35%" rx="2" fill="#E2E8F0" />
+          <rect x="58%" y="30%" width="13%" height="36%" rx="2" fill="#E2E8F0" />
+        </svg>
+      )}
 
-      {staticBoxes.map(box => (
+      {boxesToRender.map(box => (
         <BoundingBox key={box.id} box={box} />
       ))}
 
@@ -141,9 +202,9 @@ export function CameraFeed() {
       {/* HUD: bottom-right */}
       <div style={{ position: 'absolute', bottom: 10, right: 12 }}>
         <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>
-          <span style={{ color: '#22C55E' }}>3 detected</span>
+          <span style={{ color: '#22C55E' }}>{totalDetected} detected</span>
           <span style={{ color: '#64748B' }}> · </span>
-          <span style={{ color: '#EF4444' }}>1 violation</span>
+          <span style={{ color: '#EF4444' }}>{totalViolations} violation</span>
         </span>
       </div>
 

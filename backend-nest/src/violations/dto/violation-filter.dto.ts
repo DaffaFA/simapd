@@ -36,11 +36,11 @@ export class ViolationFilterDto {
   missing_ppe?: string;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true')
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   is_linked?: boolean;
 
   @IsOptional()
-  @IsUUID()
+  @IsUUID('4')
   personnel_id?: string;
 }

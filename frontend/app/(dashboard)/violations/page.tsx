@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Download, ExternalLink, Link2 } from 'lucide-react';
+import { Search, Download, ExternalLink, Link2, X } from 'lucide-react';
 import { HelmDot } from '@/components/shared/HelmDot';
 import { APDChip } from '@/components/shared/APDChip';
 import { LinkedBadge } from '@/components/shared/StatusBadge';
-import { violationApi, analyticsApi, personnelApi } from '@/src/lib/api';
+import { ViolationFrame } from '@/components/violations/ViolationFrame';
+import { LinkPersonnelPanel } from '@/components/violations/LinkPersonnelPanel';
+import { violationApi, analyticsApi, getViolationFrameUrl } from '@/src/lib/api';
+import Link from 'next/link';
 import { mapViolation } from '@/src/lib/mappers';
 import type { Violation } from '@/components/shared/types';
 
@@ -16,8 +19,7 @@ export default function Violations() {
   const [filterAPD, setFilterAPD] = useState('all');
   const [violations, setViolations] = useState<Violation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [linkingId, setLinkingId] = useState<string | null>(null);
-  const [personnelList, setPersonnelList] = useState<{ id: string; name: string }[]>([]);
+  const [linkingViolationId, setLinkingViolationId] = useState<string | null>(null);
 
   const fetchViolations = useCallback(async () => {
     try {
@@ -43,38 +45,16 @@ export default function Violations() {
 
   const selected = filtered.find(v => v.id === selectedId);
 
+  const handleLinkClick = (id: string) => {
+    setLinkingViolationId(id);
+  };
+
   const handleExport = async () => {
     try {
       await analyticsApi.exportCsv();
     } catch (err) {
       console.error('Export failed:', err);
     }
-  };
-
-  const handleLinkClick = async (violationId: string) => {
-    try {
-      const res = await personnelApi.list({ page_size: '100' });
-      setPersonnelList(res.items.map(p => ({ id: p.id, name: p.full_name })));
-      setLinkingId(violationId);
-    } catch (err) {
-      console.error('Failed to fetch personnel for linking:', err);
-    }
-  };
-
-  const handleLinkConfirm = async (personnelId: string) => {
-    if (!linkingId) return;
-    // Find the original violation ID (UUID) from our mapped violations
-    try {
-      const apiViolations = await violationApi.list({ page_size: '100' });
-      const original = apiViolations.items.find(v => v.violation_code === linkingId || v.id === linkingId);
-      if (original) {
-        await violationApi.link(original.id, { personnel_id: personnelId });
-        await fetchViolations();
-      }
-    } catch (err) {
-      console.error('Link failed:', err);
-    }
-    setLinkingId(null);
   };
 
   return (
@@ -127,7 +107,7 @@ export default function Violations() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #1E2D3D' }}>
-              {['ID Pelanggaran', 'Waktu', 'Track ID', 'Peran / Helm', 'APD Tidak Terpenuhi', 'Status', 'Personel', 'Aksi'].map(col => (
+              {['Frame', 'ID Pelanggaran', 'Waktu', 'Track ID', 'Peran / Helm', 'APD Tidak Terpenuhi', 'Status', 'Personel', 'Aksi'].map(col => (
                 <th
                   key={col}
                   style={{
@@ -150,13 +130,13 @@ export default function Violations() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} style={{ padding: 30, textAlign: 'center', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>
+                <td colSpan={9} style={{ padding: 30, textAlign: 'center', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>
                   Memuat data pelanggaran...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: 40, textAlign: 'center', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>
+                <td colSpan={9} style={{ padding: 40, textAlign: 'center', fontSize: 13, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>
                   Tidak ada pelanggaran yang cocok dengan filter
                 </td>
               </tr>
@@ -176,33 +156,21 @@ export default function Violations() {
       </div>
 
       {/* Detail Panel */}
-      {selected && <DetailPanel violation={selected} onClose={() => setSelectedId(null)} onLinkClick={() => handleLinkClick(selected.id)} />}
-
-      {/* Link Modal */}
-      {linkingId && (
-        <div
+      {selected && <DetailPanel violation={selected} onClose={() => setSelectedId(null)} />}
+      {/* Link Personnel Modal */}
+      {linkingViolationId && (
+        <div 
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          onClick={e => { if (e.target === e.currentTarget) setLinkingId(null); }}
+          onClick={e => { if (e.target === e.currentTarget) setLinkingViolationId(null); }}
         >
-          <div style={{ background: '#111827', border: '1px solid #1E2D3D', borderRadius: 12, padding: 24, width: 400, display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h3 style={{ fontSize: 15, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0 }}>Tautkan ke Personel</h3>
-            <p style={{ fontSize: 12, color: '#64748B', margin: 0 }}>Pelanggaran: {linkingId}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 200, overflowY: 'auto' }}>
-              {personnelList.map(p => (
-                <button
-                  key={p.id}
-                  onClick={() => handleLinkConfirm(p.id)}
-                  style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #1E2D3D', background: 'transparent', color: '#E2E8F0', fontSize: 13, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s' }}
-                  onMouseEnter={e => { (e.target as HTMLElement).style.background = 'rgba(249,115,22,0.1)'; }}
-                  onMouseLeave={e => { (e.target as HTMLElement).style.background = 'transparent'; }}
-                >
-                  {p.name}
-                </button>
-              ))}
+          <div style={{ background: '#111827', border: '1px solid #1E2D3D', borderRadius: 12, padding: 24, width: 460 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <h3 style={{ fontSize: 15, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0 }}>
+                Tautkan Personel
+              </h3>
+              <button onClick={() => setLinkingViolationId(null)} style={{ background: 'transparent', border: 'none', color: '#64748B', cursor: 'pointer' }}><X size={18} /></button>
             </div>
-            <button onClick={() => setLinkingId(null)} style={{ padding: '8px', borderRadius: 6, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 12, cursor: 'pointer' }}>
-              Batal
-            </button>
+            <LinkPersonnelPanel violationId={linkingViolationId} onLinked={() => { setLinkingViolationId(null); fetchViolations(); }} />
           </div>
         </div>
       )}
@@ -223,6 +191,13 @@ function ViolationRow({ v, isSelected, onClick, onLinkClick }: { v: Violation; i
       onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)'; }}
       onMouseLeave={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
     >
+      <td style={{ padding: '10px 14px' }}>
+        <ViolationFrame
+          violationId={v.id}
+          hasFrame={!!v.framePath}
+          size="thumb"
+        />
+      </td>
       <td style={{ padding: '10px 14px' }}>
         <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#F97316' }}>{v.id}</span>
       </td>
@@ -247,23 +222,38 @@ function ViolationRow({ v, isSelected, onClick, onLinkClick }: { v: Violation; i
         <LinkedBadge status={v.status} />
       </td>
       <td style={{ padding: '10px 14px' }}>
-        <span style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: v.personnelName ? '#E2E8F0' : '#64748B' }}>
-          {v.personnelName ?? '—'}
-        </span>
+        {v.personnelId ? (
+          <Link
+            href={`/personnel/${v.personnelId}`}
+            style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 500, color: '#3B82F6', textDecoration: 'none' }}
+            onClick={e => e.stopPropagation()}
+            onMouseEnter={e => { (e.target as HTMLElement).style.textDecoration = 'underline'; }}
+            onMouseLeave={e => { (e.target as HTMLElement).style.textDecoration = 'none'; }}
+          >
+            {v.personnelName ?? v.personnelId}
+          </Link>
+        ) : (
+          <span style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>
+            —
+          </span>
+        )}
       </td>
       <td style={{ padding: '10px 14px' }}>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.1)', color: '#3B82F6', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
+          <button 
+            onClick={(e) => { e.stopPropagation(); window.open(getViolationFrameUrl(v.id), '_blank'); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.1)', color: '#3B82F6', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}
+          >
             <ExternalLink size={11} />
             Frame
           </button>
-          {v.status === 'unlinked' && (
-            <button
-              onClick={e => { e.stopPropagation(); onLinkClick(); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(249,115,22,0.3)', background: 'rgba(249,115,22,0.1)', color: '#F97316', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}
+          {!v.personnelId && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onLinkClick(); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.1)', color: '#10B981', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}
             >
               <Link2 size={11} />
-              Tautkan
+              Link
             </button>
           )}
         </div>
@@ -272,7 +262,7 @@ function ViolationRow({ v, isSelected, onClick, onLinkClick }: { v: Violation; i
   );
 }
 
-function DetailPanel({ violation: v, onClose, onLinkClick }: { violation: Violation; onClose: () => void; onLinkClick: () => void }) {
+function DetailPanel({ violation: v, onClose }: { violation: Violation; onClose: () => void }) {
   const fields = [
     { label: 'Track ID', value: v.trackId, mono: true },
     { label: 'ID Pelanggaran', value: v.id, mono: true },
@@ -316,50 +306,26 @@ function DetailPanel({ violation: v, onClose, onLinkClick }: { violation: Violat
         </div>
       </div>
 
-      {/* Frame thumbnail placeholder */}
+      {/* Frame thumbnail placeholder / image */}
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-        <div
-          style={{
-            width: 200,
-            height: 120,
-            background: '#0D1117',
-            border: '1px solid #1E2D3D',
-            borderRadius: 6,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexDirection: 'column',
-            gap: 4,
-            flexShrink: 0,
-          }}
-        >
-          <span style={{ fontSize: 24, opacity: 0.3 }}>📷</span>
-          <span style={{ fontSize: 10, fontFamily: 'JetBrains Mono, monospace', color: '#64748B' }}>Frame capture</span>
+        <div style={{ width: 300, flexShrink: 0 }}>
+          <ViolationFrame
+            violationId={v.id}
+            hasFrame={!!v.framePath}
+            size="full"
+          />
         </div>
 
-        {v.status === 'unlinked' && (
-          <button
-            onClick={onLinkClick}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '10px 20px',
-              borderRadius: 8,
-              border: 'none',
-              background: '#F97316',
-              color: '#fff',
-              fontSize: 13,
-              fontFamily: 'DM Sans, sans-serif',
-              fontWeight: 600,
-              cursor: 'pointer',
-              alignSelf: 'flex-end',
-            }}
-          >
-            <Link2 size={15} />
-            Tautkan ke Personel
-          </button>
-        )}
+      </div>
+
+      {/* Link Personnel Panel */}
+      <div style={{ marginTop: 16, borderTop: '1px solid #1E2D3D', paddingTop: 16 }}>
+        <h3 style={{ fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0', marginBottom: 12 }}>
+          Tautan Karyawan
+        </h3>
+        <LinkPersonnelPanel
+          violationId={v.id}
+        />
       </div>
     </div>
   );

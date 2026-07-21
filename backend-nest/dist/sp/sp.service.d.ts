@@ -15,5 +15,6 @@ export declare class SpService {
     getConfig(): Promise<SpConfig>;
     updateConfig(dto: SpConfigUpdateDto, updatedBy: string): Promise<SpConfig>;
     findActiveAll(page: number, pageSize: number): Promise<[SpRecord[], number]>;
+    findAll(personnelId?: string): Promise<SpRecord[]>;
     expireOutdated(): Promise<number>;
 }

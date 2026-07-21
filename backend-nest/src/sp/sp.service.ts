@@ -125,6 +125,11 @@ export class SpService {
     });
   }
 
+  async findAll(personnelId?: string): Promise<SpRecord[]> {
+    const where = personnelId ? { personnel_id: personnelId } : {};
+    return this.spRepo.find({ where, order: { issued_at: 'DESC' }, relations: { personnel: true } });
+  }
+
   async expireOutdated(): Promise<number> {
     const result = await this.spRepo.createQueryBuilder()
       .update(SpRecord)

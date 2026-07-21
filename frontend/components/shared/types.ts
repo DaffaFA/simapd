@@ -15,6 +15,7 @@ export interface Violation {
   personnelId?: string;
   cameraId: string;
   zone: string;
+  framePath?: string;
 }
 
 export interface Personnel {

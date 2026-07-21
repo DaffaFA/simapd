@@ -30,6 +30,7 @@ export function mapViolation(v: ApiViolation): UIViolation {
     personnelId: v.personnel_id ?? undefined,
     cameraId: v.camera_id ?? 'CAM-01',
     zone: v.camera_id ? `ZONA ${v.camera_id.replace('CAM-', '')}` : 'ZONA A',
+    framePath: v.frame_path ?? undefined,
   };
 }
 
