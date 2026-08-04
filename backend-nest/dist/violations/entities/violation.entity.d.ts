@@ -25,4 +25,8 @@ export declare class Violation extends BaseEntity {
     linked_by: string;
     linked_at: Date;
     notes: string;
+    status: 'pending' | 'confirmed' | 'rejected';
+    rejected_by: string | null;
+    rejected_at: Date | null;
+    reject_reason: string | null;
 }

@@ -44,6 +44,8 @@ export declare class AnalyticsService {
         violation_count: number;
     }[]>;
     exportCsv(filter: AnalyticsQueryDto): Promise<string>;
-    exportPdf(dateFrom: string, dateTo: string): Promise<Buffer>;
+    private dateWhere;
+    exportPdf(dateFrom?: string, dateTo?: string): Promise<Buffer>;
+    exportExcel(dateFrom?: string, dateTo?: string): Promise<Buffer>;
     private _generatePdf;
 }

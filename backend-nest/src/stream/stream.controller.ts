@@ -1,9 +1,11 @@
-import { Controller, Get, UseGuards, Res } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, Res, ParseUUIDPipe, HttpCode, NotFoundException } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { Camera } from './entities/camera.entity';
 import { StreamGateway } from './stream.gateway';
 
@@ -19,7 +21,37 @@ export class StreamController {
 
   @Get('cameras')
   async getCameras(): Promise<Camera[]> {
-    return this.cameraRepo.find({ where: { is_active: true } });
+    return this.cameraRepo.find({ order: { created_at: 'DESC' } });
+  }
+
+  @Post('cameras')
+  @UseGuards(RolesGuard)
+  @Roles('Safety Officer', 'admin')
+  @HttpCode(201)
+  async createCamera(@Body() dto: Partial<Camera>): Promise<Camera> {
+    return this.cameraRepo.save(this.cameraRepo.create(dto));
+  }
+
+  @Patch('cameras/:id')
+  @UseGuards(RolesGuard)
+  @Roles('Safety Officer', 'admin')
+  async updateCamera(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: Partial<Camera>,
+  ): Promise<Camera> {
+    const cam = await this.cameraRepo.findOne({ where: { id } });
+    if (!cam) throw new NotFoundException('Kamera tidak ditemukan');
+    Object.assign(cam, dto);
+    return this.cameraRepo.save(cam);
+  }
+
+  @Delete('cameras/:id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @HttpCode(204)
+  async deleteCamera(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+    const result = await this.cameraRepo.delete(id);
+    if (!result.affected) throw new NotFoundException('Kamera tidak ditemukan');
   }
 
   @Get('status')
@@ -67,3 +99,4 @@ export class StreamController {
     })
   }
 }
+

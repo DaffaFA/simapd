@@ -3,13 +3,12 @@ from botocore.exceptions import ClientError
 from botocore.client import Config
 import os
 import io
-import cv2
 
 class StorageClient:
     def __init__(self):
         self.endpoint = os.getenv('RUSTFS_ENDPOINT', 'http://localhost:9000')
-        self.access_key = os.getenv('RUSTFS_ACCESS_KEY', 'rustfsadmin')
-        self.secret_key = os.getenv('RUSTFS_SECRET_KEY', 'rustfsadmin')
+        self.access_key = os.getenv('RUSTFS_ACCESS_KEY', 'QRSSaQVq8Rue4AnjHXJT')
+        self.secret_key = os.getenv('RUSTFS_SECRET_KEY', '4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme')
         self.bucket = os.getenv('RUSTFS_BUCKET', 'simapd-frames')
         
         # Inisialisasi boto3 client untuk S3-compatible (RustFS)
@@ -35,25 +34,42 @@ class StorageClient:
             except Exception as e:
                 print(f"[StorageClient] Gagal membuat bucket: {e}")
 
-    def upload_frame(self, frame_bgr, object_key: str, quality: int = 85) -> str | None:
+        # Set public-read policy agar unsigned URL bisa diakses browser
+        try:
+            import json
+            policy = json.dumps({
+                "Version": "2012-10-17",
+                "Statement": [{
+                    "Sid": "PublicRead",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": ["s3:GetObject"],
+                    "Resource": [f"arn:aws:s3:::{self.bucket}/*"],
+                }],
+            })
+            self.s3.put_bucket_policy(Bucket=self.bucket, Policy=policy)
+            print(f"[StorageClient] Bucket policy public-read diterapkan: {self.bucket}")
+        except Exception as e:
+            print(f"[StorageClient] ⚠ Gagal set bucket policy: {e}")
+
+    def upload_frame(self, frame_bytes: bytes, object_key: str) -> str | None:
         """
-        Encode frame numpy (BGR) ke JPEG dan upload langsung ke RustFS di memory
+        Upload pre-encoded JPEG bytes langsung ke RustFS di memory
         tanpa perlu simpan ke disk (I/O optimization).
         Return object_key jika sukses, None jika gagal.
         """
         try:
-            success, buffer = cv2.imencode('.jpg', frame_bgr, [cv2.IMWRITE_JPEG_QUALITY, quality])
-            if not success:
-                return None
-                
-            io_buffer = io.BytesIO(buffer)
+            io_buffer = io.BytesIO(frame_bytes)
             self.s3.upload_fileobj(
                 io_buffer, 
                 self.bucket, 
                 object_key,
                 ExtraArgs={'ContentType': 'image/jpeg'}
             )
+            print(f'[StorageClient] ✅ Uploaded: {object_key} ({len(frame_bytes)//1024}KB)')
             return object_key
         except Exception as e:
-            print(f"[StorageClient] Gagal upload {object_key}: {e}")
+            print(f'[StorageClient] ❌ Upload FAILED: {e}')
+            print(f'[StorageClient]    endpoint={self.s3.meta.endpoint_url}')
+            print(f'[StorageClient]    bucket={self.bucket}')
             return None

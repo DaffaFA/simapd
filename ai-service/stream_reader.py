@@ -10,8 +10,6 @@ class StreamReader:
     self.detector = detector; self.redis_pub = redis_pub
     self.storage_client = storage_client or StorageClient()
     self.is_running = False; self._thread = None
-    self._cooldown: dict[int, float] = {}
-    self.COOLDOWN_S = 30
     self.PROCESS_EVERY_N = 3   # ~10fps dari 30fps source
     self.FRAME_PUBLISH_EVERY = 3   # publish 1 dari setiap 3 processed frame -> ~3 FPS di browser
     self.FRAME_TARGET_WIDTH  = 854  # resize ke lebar ini sebelum encode (854x480 untuk 16:9)
@@ -35,10 +33,14 @@ class StreamReader:
     Return object_key (frame_key) jika sukses.
     """
     try:
+      ok, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+      if not ok:
+        print('[StreamReader] Frame encode failed')
+        return None
       ts = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')
       # Format key: frames/CAM-01/2026..._track1.jpg
       object_key = f'frames/{camera_id}/{ts}_track{track_id}.jpg'
-      return self.storage_client.upload_frame(frame, object_key)
+      return self.storage_client.upload_frame(buf.tobytes(), object_key)
     except Exception as e:
       print(f'[StreamReader] Frame save failed: {e}')
       return None
@@ -94,6 +96,7 @@ class StreamReader:
     """
     cap = None; frame_n = 0
     frame_pub_counter = 0
+    recorded: set = set()   # track_ids yang sudah direkam violasi-nya
     while self.is_running:
       if cap is None or not cap.isOpened():
         print(f'[{self.camera_id}] Connecting to stream...')
@@ -106,13 +109,13 @@ class StreamReader:
       ret, frame = cap.read()
       if not ret:
         print(f'[{self.camera_id}] Frame fail, reconnecting...')
-        cap.release(); cap = None; time.sleep(1); continue
+        cap.release(); cap = None; recorded.clear(); time.sleep(1); continue
 
       frame_n += 1
       if frame_n % self.PROCESS_EVERY_N != 0: continue
 
       try:
-        ts = datetime.now(timezone.utc).isoformat()
+        ts = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z'
         
         results = self.detector.process_frame(frame, self.camera_id)
         
@@ -121,24 +124,23 @@ class StreamReader:
             self._publish_frame(frame, self.camera_id, results, ts)
 
         for det in results:
-          
+          self.redis_pub.publish('detections', {'event':'detection','timestamp':ts,**det})
+
           if not det['is_compliant']:
-            last = self._cooldown.get(det['track_id'], 0)
-            if time.time() - last > self.COOLDOWN_S:
-              self._cooldown[det['track_id']] = time.time()
+            # Dedup by track_id: setiap track_id hanya memicu SATU violation record
+            track_key = f"{self.camera_id}_{det.get('track_id')}"
+            if track_key not in recorded:
+              recorded.add(track_key)
 
               # Capture frame saat violation terdeteksi
               frame_key = self._save_frame(frame, self.camera_id, det['track_id'])
 
               self.redis_pub.publish('detections', {
                 **det,
-                'event':'detection',
+                'event':'violation',
                 'timestamp': ts,
                 'frame_key': frame_key,
               })
-          else:
-            # Jika compliant, publish tanpa frame_path
-            self.redis_pub.publish('detections', {'event':'detection','timestamp':ts,**det})
 
         if (frame_n // self.PROCESS_EVERY_N) % 50 == 0:
           self.redis_pub.publish('heartbeat', {'camera_id':self.camera_id,'fps':10,'timestamp':ts})

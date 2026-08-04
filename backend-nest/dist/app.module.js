@@ -10,6 +10,7 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const typeorm_1 = require("@nestjs/typeorm");
+const schedule_1 = require("@nestjs/schedule");
 const configuration_1 = require("./config/configuration");
 const redis_module_1 = require("./redis/redis.module");
 const auth_module_1 = require("./auth/auth.module");
@@ -19,6 +20,7 @@ const sp_module_1 = require("./sp/sp.module");
 const analytics_module_1 = require("./analytics/analytics.module");
 const stream_module_1 = require("./stream/stream.module");
 const storage_module_1 = require("./storage/storage.module");
+const notifications_module_1 = require("./notifications/notifications.module");
 const seed_service_1 = require("./common/seed.service");
 const user_entity_1 = require("./auth/entities/user.entity");
 const sp_config_entity_1 = require("./sp/entities/sp-config.entity");
@@ -47,6 +49,7 @@ exports.AppModule = AppModule = __decorate([
                 }),
             }),
             typeorm_1.TypeOrmModule.forFeature([user_entity_1.User, sp_config_entity_1.SpConfig, camera_entity_1.Camera, personnel_entity_1.Personnel]),
+            schedule_1.ScheduleModule.forRoot(),
             redis_module_1.RedisModule,
             auth_module_1.AuthModule,
             personnel_module_1.PersonnelModule,
@@ -55,6 +58,7 @@ exports.AppModule = AppModule = __decorate([
             analytics_module_1.AnalyticsModule,
             stream_module_1.StreamModule,
             storage_module_1.StorageModule,
+            notifications_module_1.NotificationsModule,
         ],
         providers: [seed_service_1.SeedService],
     })

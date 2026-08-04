@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import { Violation } from './entities/violation.entity';
 import { ViolationLink } from './entities/violation-link.entity';
@@ -10,7 +11,9 @@ export declare class ViolationsService {
     private repo;
     private linkRepo;
     private spService;
-    constructor(repo: Repository<Violation>, linkRepo: Repository<ViolationLink>, spService: SpService);
+    private cfg;
+    private readonly logger;
+    constructor(repo: Repository<Violation>, linkRepo: Repository<ViolationLink>, spService: SpService, cfg: ConfigService);
     static computeShift(date: Date): 'Pagi' | 'Siang' | 'Malam';
     static buildMissingList(v: Partial<Violation>): string[];
     private generateCode;
@@ -21,5 +24,8 @@ export declare class ViolationsService {
     unlinkFromPersonnel(violationId: string, personnelId: string): Promise<void>;
     getLinksForViolation(violationId: string): Promise<ViolationLink[]>;
     remove(id: string): Promise<void>;
+    rejectViolation(id: string, rejectedBy: string, reason?: string): Promise<Violation>;
+    confirmViolation(id: string, confirmedBy: string): Promise<Violation>;
+    autoRejectExpired(): Promise<number>;
     toResponseDto(v: Violation): ViolationResponseDto;
 }

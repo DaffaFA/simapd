@@ -98,11 +98,10 @@ def main():
             # Model weights di-load sekali per kamera — gunakan YOLO_MODEL_PATH yang sama
             det = make_detector()
             r   = StreamReader(
-                rtsp_url     = cam['rtsp_url'],
-                camera_id    = cam['id'],
-                detector     = det,
-                redis_pub    = redis_pub,
-                captures_dir = captures_dir,
+                rtsp_url  = cam['rtsp_url'],
+                camera_id = cam['id'],
+                detector  = det,
+                redis_pub = redis_pub,
             )
             r.start()
             readers.append(r)

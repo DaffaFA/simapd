@@ -18,7 +18,6 @@ const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const personnel_entity_1 = require("./entities/personnel.entity");
 const sp_service_1 = require("../sp/sp.service");
-const violation_entity_1 = require("../violations/entities/violation.entity");
 let PersonnelService = class PersonnelService {
     constructor(repo, spService) {
         this.repo = repo;
@@ -66,8 +65,14 @@ let PersonnelService = class PersonnelService {
         await this.repo.save(p);
     }
     async toDto(p) {
+        try {
+            await this.spService.checkAndAutoIssueSp(p.id, 'System');
+        }
+        catch (e) {
+            console.error(`Auto SP check failed for personnel ${p.id}:`, e);
+        }
         const [vCount, activeSp] = await Promise.all([
-            this.repo.manager.count(violation_entity_1.Violation, { where: { personnel_id: p.id } }),
+            this.spService.countViolationsForPersonnel(p.id),
             this.spService.getActiveSp(p.id),
         ]);
         return { ...p, violation_count: vCount, active_sp: activeSp?.level ?? null };

@@ -16,6 +16,7 @@ exports.ViolationsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const fs = require("fs");
+const promises_1 = require("stream/promises");
 const violations_service_1 = require("./violations.service");
 const storage_service_1 = require("../storage/storage.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
@@ -78,12 +79,17 @@ let ViolationsController = class ViolationsController {
         if (!violation)
             throw new common_1.NotFoundException('Violation tidak ditemukan');
         if (violation.frame_key) {
-            try {
-                const url = await this.storage.getPresignedUrl(violation.frame_key);
-                res.redirect(302, url);
+            const stream = await this.storage.streamObject(violation.frame_key);
+            if (!stream) {
+                throw new common_1.NotFoundException('Frame tidak ditemukan di storage');
             }
-            catch (err) {
-                throw new common_1.NotFoundException('Gagal memuat frame dari storage');
+            res.setHeader('Content-Type', 'image/jpeg');
+            res.setHeader('Cache-Control', 'public, max-age=86400');
+            res.setHeader('Content-Disposition', `inline; filename="violation-${id}.jpg"`);
+            try {
+                await (0, promises_1.pipeline)(stream, res);
+            }
+            catch (e) {
             }
             return;
         }
@@ -97,6 +103,14 @@ let ViolationsController = class ViolationsController {
             return;
         }
         throw new common_1.NotFoundException('Frame tidak tersedia untuk violation ini');
+    }
+    async rejectViolation(id, reason, user) {
+        const v = await this.service.rejectViolation(id, user.username, reason);
+        return this.service.toResponseDto(v);
+    }
+    async confirmViolation(id, user) {
+        const v = await this.service.confirmViolation(id, user.username);
+        return this.service.toResponseDto(v);
     }
     async remove(id) {
         return this.service.remove(id);
@@ -155,6 +169,27 @@ __decorate([
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], ViolationsController.prototype, "getViolationFrame", null);
+__decorate([
+    (0, common_1.Post)(':id/reject'),
+    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Body)('reason')),
+    __param(2, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, user_entity_1.User]),
+    __metadata("design:returntype", Promise)
+], ViolationsController.prototype, "rejectViolation", null);
+__decorate([
+    (0, common_1.Post)(':id/confirm'),
+    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_entity_1.User]),
+    __metadata("design:returntype", Promise)
+], ViolationsController.prototype, "confirmViolation", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),

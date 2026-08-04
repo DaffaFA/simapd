@@ -2,18 +2,20 @@ import { Injectable, OnApplicationBootstrap, Logger, Inject, forwardRef } from '
 import { RedisService } from '../redis/redis.service';
 import { ViolationsService } from '../violations/violations.service';
 import { StreamGateway } from './stream.gateway';
-import { DetectionMessage, FrameMessage } from '../common/types/detection.types';
+import { NotificationsService } from '../notifications/notifications.service';
+import { FrameMessage } from '../common/types/detection.types';
 
 @Injectable()
 export class StreamService implements OnApplicationBootstrap {
   private readonly logger = new Logger(StreamService.name);
-  private cooldown = new Map<number, number>(); // track_id → last_violation_timestamp_ms
-  private readonly COOLDOWN_MS = 30_000;
+  private pendingBatch = new Map<string, { count: number; missing: Set<string> }>();
+  private batchTimer?:  ReturnType<typeof setTimeout>;
 
   constructor(
     private redis: RedisService,
     private violations: ViolationsService,
     @Inject(forwardRef(() => StreamGateway)) private gateway: StreamGateway,
+    @Inject(forwardRef(() => NotificationsService)) private notifications: NotificationsService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -33,7 +35,7 @@ export class StreamService implements OnApplicationBootstrap {
   }
 
   private async onDetection(raw: string) {
-    let msg: DetectionMessage;
+    let msg: any;
     try {
       msg = JSON.parse(raw);
     } catch {
@@ -43,11 +45,9 @@ export class StreamService implements OnApplicationBootstrap {
     // Broadcast semua detections (compliant + non-compliant) ke WS clients
     this.gateway.broadcast(msg);
 
-    if (!msg.is_compliant) {
-      const now = Date.now();
-      if (now - (this.cooldown.get(msg.track_id) ?? 0) < this.COOLDOWN_MS) return;
-      this.cooldown.set(msg.track_id, now);
-
+    // Hanya buat DB violation record jika event type = 'violation'
+    // Event type 'detection' hanya untuk live display — JANGAN simpan ke DB
+    if (msg.event === 'violation') {
       try {
         const v = await this.violations.createFromDetection({
           track_id: msg.track_id,
@@ -55,18 +55,18 @@ export class StreamService implements OnApplicationBootstrap {
           detected_at: new Date(msg.timestamp),
           helm_color_detected: msg.helm_color,
           role_detected: msg.role_label,
-          missing_helm: msg.missing_ppe.includes('helm'),
-          missing_vest: msg.missing_ppe.includes('vest'),
-          missing_shoes: msg.missing_ppe.includes('sepatu'),
+          missing_helm: (msg.missing_ppe ?? []).includes('helm'),
+          missing_vest: (msg.missing_ppe ?? []).includes('vest'),
+          missing_shoes: (msg.missing_ppe ?? []).includes('sepatu'),
           confidence: msg.confidence,
-          bbox_x1: msg.bbox[0],
-          bbox_y1: msg.bbox[1],
-          bbox_x2: msg.bbox[2],
-          bbox_y2: msg.bbox[3],
+          bbox_x1: msg.bbox?.[0],
+          bbox_y1: msg.bbox?.[1],
+          bbox_x2: msg.bbox?.[2],
+          bbox_y2: msg.bbox?.[3],
           frame_path: msg.frame_path ?? undefined,
           frame_key: msg.frame_key ?? undefined,
         });
-        
+
         this.gateway.broadcast({
           event: 'violation_alert',
           violation_id: v.id,
@@ -75,18 +75,35 @@ export class StreamService implements OnApplicationBootstrap {
           camera_id: msg.camera_id,
           role_label: msg.role_label,
           missing_ppe: msg.missing_ppe,
+          frame_key: msg.frame_key,
           timestamp: msg.timestamp,
         });
-      } catch (e) {
-        this.logger.error('Save violation failed:', e);
-      }
 
-      // Cleanup cooldown map
-      if (this.cooldown.size > 1000) {
-        const cutoff = Date.now() - this.COOLDOWN_MS;
-        this.cooldown.forEach((t, k) => {
-          if (t < cutoff) this.cooldown.delete(k);
-        });
+        const batchKey = msg.camera_id;
+        const existing = this.pendingBatch.get(batchKey) ?? { count: 0, missing: new Set<string>() };
+        existing.count++;
+        (msg.missing_ppe ?? []).forEach((p: string) => existing.missing.add(p));
+        this.pendingBatch.set(batchKey, existing);
+
+        clearTimeout(this.batchTimer);
+        this.batchTimer = setTimeout(async () => {
+          for (const [cameraId, batch] of this.pendingBatch.entries()) {
+            await this.notifications.sendViolationNotification({
+              camera_id:   cameraId,
+              count:       batch.count,
+              missing_ppe: Array.from(batch.missing),
+            });
+          }
+          this.pendingBatch.clear();
+        }, 5000);
+
+        this.logger.log(
+          `Violation saved: ${v.violation_code} | ` +
+          `camera=${msg.camera_id} track=${msg.track_id} | ` +
+          `frame_key=${msg.frame_key ?? 'null'}`
+        );
+      } catch (e) {
+        this.logger.error(`Save violation failed: ${(e as Error).message}`);
       }
     }
   }

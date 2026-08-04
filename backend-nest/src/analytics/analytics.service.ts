@@ -127,15 +127,119 @@ export class AnalyticsService {
     return header + body;
   }
 
-  async exportPdf(dateFrom: string, dateTo: string): Promise<Buffer> {
+  private dateWhere(dateFrom?: string, dateTo?: string) {
+    const where: any = {}
+    if (dateFrom || dateTo) {
+      const from = dateFrom ? new Date(dateFrom) : new Date('2000-01-01')
+      const to   = dateTo   ? new Date(dateTo)   : new Date()
+      to.setHours(23, 59, 59, 999)   // sampai akhir hari
+      where.detected_at = Between(from, to)
+    }
+    return where
+  }
+
+  async exportPdf(dateFrom?: string, dateTo?: string): Promise<Buffer> {
+    const from = dateFrom ?? new Date(Date.now()-30*86400000).toISOString().slice(0,10);
+    const to   = dateTo ?? new Date().toISOString().slice(0,10);
     const [summary, trend, byType, byShift, offenders] = await Promise.all([
       this.getDashboardSummary(), 
       this.getDailyTrend(7),
-      this.getByType(dateFrom, dateTo), 
-      this.getByShift(dateFrom, dateTo),
-      this.getTopOffenders(10, dateFrom, dateTo),
+      this.getByType(from, to), 
+      this.getByShift(from, to),
+      this.getTopOffenders(10, from, to),
     ]);
-    return this._generatePdf({ summary, trend, byType, byShift, offenders, dateFrom, dateTo });
+    return this._generatePdf({ summary, trend, byType, byShift, offenders, dateFrom: from, dateTo: to });
+  }
+
+  async exportExcel(dateFrom?: string, dateTo?: string): Promise<Buffer> {
+    const ExcelJS = await import('exceljs')
+    const wb  = new ExcelJS.Workbook()
+    wb.creator = 'SiMAPD'
+    wb.created = new Date()
+
+    const where      = this.dateWhere(dateFrom, dateTo)
+    const violations = await this.violationRepo.find({
+      where, order: { detected_at: 'DESC' },
+      relations: { links: { personnel: true }, personnel: true },
+    })
+
+    // ── Sheet 1: Ringkasan ─────────────────────────────────────────────────
+    const ws1 = wb.addWorksheet('Ringkasan')
+    ws1.columns = [
+      { header: 'Keterangan', key: 'label', width: 35 },
+      { header: 'Nilai',      key: 'value', width: 20 },
+    ]
+    const total    = violations.length
+    const noHelm   = violations.filter(v => v.missing_helm).length
+    const noVest   = violations.filter(v => v.missing_vest).length
+    const noShoes  = violations.filter(v => v.missing_shoes).length
+    const linked   = violations.filter(v => v.personnel_id || (v.links && v.links.length > 0)).length
+    ws1.addRows([
+      { label: 'Periode',                    value: `${dateFrom ?? 'Semua'} – ${dateTo ?? 'Semua'}` },
+      { label: 'Total Pelanggaran',          value: total },
+      { label: 'Tanpa Helm',                 value: noHelm },
+      { label: 'Tanpa Rompi',                value: noVest },
+      { label: 'Tanpa Sepatu',               value: noShoes },
+      { label: 'Pelanggaran Terhubung ke Karyawan', value: linked },
+      { label: 'Pelanggaran Belum Terhubung',       value: total - linked },
+    ])
+    ws1.getRow(1).font = { bold: true }
+    ws1.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3F0FF' } }
+
+    // ── Sheet 2: Detail Pelanggaran ────────────────────────────────────────
+    const ws2 = wb.addWorksheet('Detail Pelanggaran')
+    ws2.columns = [
+      { header: 'Kode',         key: 'code',      width: 20 },
+      { header: 'Tanggal',      key: 'date',      width: 22 },
+      { header: 'Shift',        key: 'shift',     width: 10 },
+      { header: 'Kamera',       key: 'cam',       width: 18 },
+      { header: 'Track ID',     key: 'track',     width: 10 },
+      { header: 'Tanpa Helm',   key: 'helm',      width: 14 },
+      { header: 'Tanpa Rompi',  key: 'vest',      width: 14 },
+      { header: 'Tanpa Sepatu', key: 'shoes',     width: 14 },
+      { header: 'Warna Helm',   key: 'color',     width: 14 },
+      { header: 'Karyawan',     key: 'personnel', width: 30 },
+    ]
+    violations.forEach(v => {
+      let names = v.personnel?.full_name;
+      if (!names && v.links?.length > 0) {
+        names = v.links.map(l => l.personnel?.full_name).filter(Boolean).join(', ');
+      }
+      ws2.addRow({
+        code:      v.violation_code,
+        date:      new Date(v.detected_at).toLocaleString('id-ID'),
+        shift:     v.shift,
+        cam:       v.camera_id,
+        track:     v.track_id,
+        helm:      v.missing_helm  ? '✗' : '✓',
+        vest:      v.missing_vest  ? '✗' : '✓',
+        shoes:     v.missing_shoes ? '✗' : '✓',
+        color:     v.helm_color_detected ?? '—',
+        personnel: names || '—',
+      })
+    })
+    ws2.getRow(1).font = { bold: true }
+    ws2.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3F0FF' } }
+
+    // ── Sheet 3: Karyawan Paling Sering Melanggar ─────────────────────────
+    const ws3 = wb.addWorksheet('Top Pelanggar')
+    ws3.columns = [
+      { header: 'Nama',         key: 'name',  width: 30 },
+      { header: 'ID Karyawan',  key: 'eid',   width: 16 },
+      { header: 'Departemen',   key: 'dept',  width: 20 },
+      { header: 'Jml Violation',key: 'count', width: 16 },
+      { header: 'SP Aktif',     key: 'sp',    width: 14 },
+    ]
+    const top = await this.getTopOffenders(10, dateFrom, dateTo)
+    // Fallback info for dept and sp since they are not in getTopOffenders
+    top.forEach((p: any) => ws3.addRow({
+      name:  p.full_name, eid: p.employee_id, dept: p.department ?? '—',
+      count: p.violation_count, sp: p.active_sp?.level ?? '—',
+    }))
+    ws3.getRow(1).font = { bold: true }
+    ws3.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3F0FF' } }
+
+    return Buffer.from(await wb.xlsx.writeBuffer() as ArrayBuffer)
   }
 
   private _generatePdf(data: any): Promise<Buffer> {

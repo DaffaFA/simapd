@@ -77,4 +77,17 @@ export class Violation extends BaseEntity {
 
   @Column({ nullable: true })
   notes: string;
+
+  // ── Status lifecycle ─────────────────────────────────────────────────────
+  @Column({ type: 'varchar', length: 20, default: 'pending' })
+  status: 'pending' | 'confirmed' | 'rejected';
+
+  @Column({ type: 'varchar', nullable: true })
+  rejected_by: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  rejected_at: Date | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  reject_reason: string | null;
 }

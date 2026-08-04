@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, AlertTriangle, Users, BarChart2, Shield } from 'lucide-react';
+import { LayoutDashboard, AlertTriangle, Users, BarChart2, Shield, Settings } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/violations', label: 'Pelanggaran', icon: AlertTriangle },
   { to: '/personnel', label: 'Personel & SP', icon: Users },
   { to: '/analytics', label: 'Analitik', icon: BarChart2 },
+  { to: '/settings', label: 'Pengaturan', icon: Settings },
 ];
 
 export function Sidebar() {

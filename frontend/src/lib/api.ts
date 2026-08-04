@@ -9,7 +9,7 @@ function getToken() {
   return localStorage.getItem('simapd_token')
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
   const res = await fetch(`${BASE}${path}`, {
     ...options,
@@ -77,6 +77,7 @@ export const spApi = {
   updateConfig: (b: any) => apiFetch<any>('/sp/config', { method: 'PUT', body: JSON.stringify(b) }),
   getActive: (p?: Record<string, any>) =>
     apiFetch<PaginatedResponse<SpRecord>>(`/sp/active?${new URLSearchParams(p??{})}`),
+  downloadLetter: (spId: string) => apiDownload(`/sp/${spId}/letter`),
 }
 
 export const analyticsApi = {
@@ -192,4 +193,20 @@ export async function getSPRecordsByPersonnel(
   personnelId: string,
 ): Promise<SpRecord[]> {
   return apiFetch<SpRecord[]>(`/sp?personnel_id=${personnelId}`)
+}
+
+export async function rejectViolation(
+  violationId: string,
+  reason?:     string,
+): Promise<void> {
+  return apiFetch(`/violations/${violationId}/reject`, {
+    method: 'POST',
+    body:   JSON.stringify({ reason: reason ?? '' }),
+  })
+}
+
+export async function confirmViolation(violationId: string): Promise<void> {
+  return apiFetch(`/violations/${violationId}/confirm`, {
+    method: 'POST',
+  })
 }

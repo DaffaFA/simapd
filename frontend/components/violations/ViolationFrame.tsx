@@ -1,30 +1,16 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { fetchViolationFrame } from '@/src/lib/api'
+import { useState } from 'react'
 
 interface Props {
   violationId: string
   hasFrame: boolean
+  frameUrl?: string
   size?: 'thumb' | 'full'
   className?: string
 }
 
-export function ViolationFrame({ violationId, hasFrame, size = 'full', className }: Props) {
-  const [src, setSrc] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+export function ViolationFrame({ violationId, hasFrame, frameUrl, size = 'full', className }: Props) {
   const [error, setError] = useState(false)
-
-  useEffect(() => {
-    if (!hasFrame) return
-    setLoading(true)
-    fetchViolationFrame(violationId)
-      .then(url => { setSrc(url); setError(!url) })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
-
-    // Cleanup blob URL saat unmount
-    return () => { if (src) URL.revokeObjectURL(src) }
-  }, [violationId, hasFrame])
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -38,7 +24,7 @@ export function ViolationFrame({ violationId, hasFrame, size = 'full', className
     height: size === 'thumb' ? 40 : 192,
   }
 
-  if (!hasFrame) {
+  if (!hasFrame || !frameUrl) {
     return (
       <div style={{ ...containerStyle, background: '#0D1117', color: '#64748B' }} className={className}>
         {size === 'thumb' ? '—' : 'Frame tidak tersedia'}
@@ -46,15 +32,7 @@ export function ViolationFrame({ violationId, hasFrame, size = 'full', className
     )
   }
 
-  if (loading) {
-    return (
-      <div style={{ ...containerStyle, background: 'rgba(255,255,255,0.05)', color: '#64748B' }} className={className}>
-        {size === 'thumb' ? '...' : 'Memuat frame...'}
-      </div>
-    )
-  }
-
-  if (error || !src) {
+  if (error) {
     return (
       <div style={{ ...containerStyle, background: 'rgba(239,68,68,0.1)', color: '#EF4444' }} className={className}>
         {size === 'thumb' ? '!' : 'Gagal memuat frame'}
@@ -65,8 +43,9 @@ export function ViolationFrame({ violationId, hasFrame, size = 'full', className
   if (size === 'thumb') {
     return (
       <img
-        src={src}
+        src={frameUrl}
         alt="frame"
+        onError={() => setError(true)}
         style={{
           width: 40,
           height: 40,
@@ -82,8 +61,9 @@ export function ViolationFrame({ violationId, hasFrame, size = 'full', className
 
   return (
     <img
-      src={src}
+      src={frameUrl}
       alt={`Frame violation ${violationId}`}
+      onError={() => setError(true)}
       style={{
         width: '100%',
         maxHeight: 384,

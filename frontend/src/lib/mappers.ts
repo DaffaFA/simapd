@@ -19,7 +19,8 @@ export function mapViolation(v: ApiViolation): UIViolation {
     : '--:--:--';
 
   return {
-    id: v.violation_code ?? v.id,
+    id: v.id,
+    violationCode: v.violation_code ?? v.id,
     trackId: `TRK-${String(v.track_id).padStart(3, '0')}`,
     time,
     role: v.role_detected ?? 'Unknown',

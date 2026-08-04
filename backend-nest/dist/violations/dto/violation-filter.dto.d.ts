@@ -8,4 +8,6 @@ export declare class ViolationFilterDto {
     missing_ppe?: string;
     is_linked?: boolean;
     personnel_id?: string;
+    exclude_status?: string;
+    status?: string;
 }

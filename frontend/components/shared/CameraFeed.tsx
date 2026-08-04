@@ -3,6 +3,8 @@ import type { DetectionMsg } from '@/src/types/simapd';
 
 interface CameraFeedProps {
   detections?: DetectionMsg[];
+  cameraId?: string;
+  hideOverlay?: boolean;
 }
 
 interface BoundingBoxData {
@@ -94,7 +96,7 @@ function BoundingBox({ box }: { box: BoundingBoxData }) {
   );
 }
 
-export function CameraFeed({ detections = [] }: CameraFeedProps) {
+export function CameraFeed({ detections = [], cameraId = 'CAM-01', hideOverlay = false }: CameraFeedProps) {
   const [time, setTime] = useState('');
   const [blinkOn, setBlinkOn] = useState(true);
   const [activeBoxes, setActiveBoxes] = useState<BoundingBoxData[]>([]);
@@ -190,43 +192,51 @@ export function CameraFeed({ detections = [] }: CameraFeedProps) {
       </div>
 
       {/* HUD: top-right cam info */}
-      <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#64748B' }}>CAM-01 · ZONA A · 1920×1080</span>
-      </div>
+      {!hideOverlay && (
+        <div style={{ position: 'absolute', top: 10, right: 12, display: 'flex', gap: 4, flexDirection: 'column', alignItems: 'flex-end' }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#64748B' }}>{cameraId} · ZONA A · 1920×1080</span>
+        </div>
+      )}
 
       {/* HUD: bottom-left */}
-      <div style={{ position: 'absolute', bottom: 10, left: 12, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#64748B' }}>{time} · YOLOv8m · ByteTrack</span>
-      </div>
+      {!hideOverlay && (
+        <div style={{ position: 'absolute', bottom: 10, left: 12, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#64748B' }}>{time} · YOLOv8m · ByteTrack</span>
+        </div>
+      )}
 
       {/* HUD: bottom-right */}
-      <div style={{ position: 'absolute', bottom: 10, right: 12 }}>
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>
-          <span style={{ color: '#22C55E' }}>{totalDetected} detected</span>
-          <span style={{ color: '#64748B' }}> · </span>
-          <span style={{ color: '#EF4444' }}>{totalViolations} violation</span>
-        </span>
-      </div>
+      {!hideOverlay && (
+        <div style={{ position: 'absolute', bottom: 10, right: 12 }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10 }}>
+            <span style={{ color: '#22C55E' }}>{totalDetected} detected</span>
+            <span style={{ color: '#64748B' }}> · </span>
+            <span style={{ color: '#EF4444' }}>{totalViolations} violation</span>
+          </span>
+        </div>
+      )}
 
       {/* tag row */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', gap: 0 }}>
-        {['SAHI Active', 'ByteTrack v2', '50ms latency', 'YOLOv8m @ .87 mAP'].map(tag => (
-          <span
-            key={tag}
-            style={{
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: 9,
-              color: '#64748B',
-              background: 'rgba(13,17,23,0.8)',
-              padding: '3px 8px',
-              borderTop: '1px solid #1E2D3D',
-              borderRight: '1px solid #1E2D3D',
-            }}
-          >
-            {tag}
-          </span>
-        ))}
-      </div>
+      {!hideOverlay && (
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, display: 'flex', gap: 0 }}>
+          {['SAHI Active', 'ByteTrack v2', '50ms latency', 'YOLOv8m @ .87 mAP'].map(tag => (
+            <span
+              key={tag}
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 9,
+                color: '#64748B',
+                background: 'rgba(13,17,23,0.8)',
+                padding: '3px 8px',
+                borderTop: '1px solid #1E2D3D',
+                borderRight: '1px solid #1E2D3D',
+              }}
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

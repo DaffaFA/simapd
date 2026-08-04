@@ -11,6 +11,9 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/violations': { title: 'Manajemen Pelanggaran', subtitle: 'Rekap & tindak lanjut seluruh insiden pelanggaran APD' },
   '/personnel': { title: 'Manajemen Personel & SP', subtitle: 'Data karyawan, riwayat pelanggaran, dan surat peringatan' },
   '/analytics': { title: 'Pelaporan & Analitik', subtitle: 'Tren kepatuhan, distribusi, dan laporan periodik' },
+  '/settings': { title: 'Pengaturan Sistem', subtitle: 'Konfigurasi SP, manajemen kamera, dan preferensi sistem' },
+  '/settings/sp-config': { title: 'Pengaturan Sistem', subtitle: 'Konfigurasi SP, manajemen kamera, dan preferensi sistem' },
+  '/settings/cameras': { title: 'Pengaturan Sistem', subtitle: 'Konfigurasi SP, manajemen kamera, dan preferensi sistem' },
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

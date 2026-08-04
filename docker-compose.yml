@@ -59,8 +59,8 @@ services:
       - RUSTFS_ADDRESS=0.0.0.0:9000
       - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
       - RUSTFS_CONSOLE_ENABLE=true
-      - RUSTFS_ACCESS_KEY=rustfsadmin
-      - RUSTFS_SECRET_KEY=rustfsadmin
+      - RUSTFS_ACCESS_KEY=QRSSaQVq8Rue4AnjHXJT
+      - RUSTFS_SECRET_KEY=4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme
       - RUSTFS_UNSAFE_BYPASS_DISK_CHECK=true
     volumes:
       - rustfs_data:/data/rustfs0
@@ -82,8 +82,8 @@ services:
       DATABASE_HOST: postgres
       REDIS_URL: redis://redis:6379
       RUSTFS_ENDPOINT: http://rustfs:9000
-      RUSTFS_ACCESS_KEY: rustfsadmin
-      RUSTFS_SECRET_KEY: rustfsadmin
+      RUSTFS_ACCESS_KEY: QRSSaQVq8Rue4AnjHXJT
+      RUSTFS_SECRET_KEY: 4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme
       RUSTFS_BUCKET: simapd-frames
     depends_on:
       postgres: { condition: service_healthy }
@@ -95,6 +95,31 @@ services:
       timeout: 5s
       retries: 3
     # Port TIDAK di-expose ke host — akses via NGINX
+
+  # ── CCTV simulator ───────────────────────────────────────────────────────────
+  # mediamtx + camsim tidak ada kamera fisik di lingkungan dev/thesis ini.
+  # camsim loop-publish video rekaman produksi ke mediamtx sebagai RTSP,
+  # supaya ai-service bisa konsumsi via StreamReader (rtsp://...) persis
+  # seperti akan terjadi dengan kamera CCTV asli. Ini murni fixture simulasi,
+  # BUKAN komponen arsitektur produksi (di produksi, ai-service konek langsung
+  # ke RTSP kamera fisik, tanpa relay tambahan).
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: simapd-mediamtx
+    restart: unless-stopped
+    ports:
+      - '8554:8554'   # RTSP
+
+  camsim:
+    build:
+      context: ./camsim
+      dockerfile: Dockerfile
+    container_name: simapd-camsim
+    restart: unless-stopped
+    depends_on:
+      - mediamtx
+    volumes:
+      - ./videos:/videos:ro
 
   ai-service:
     build:
@@ -121,20 +146,25 @@ services:
       # Opsi B: Multi-camera (baru)
       # - CAMERAS=[{"id":"CAM-01","rtsp_url":"rtsp://user:pass@192.168.1.100:554/stream"},{"id":"CAM-02","rtsp_url":"rtsp://user:pass@192.168.1.101:554/stream"}]
 
-      # Opsi C: Demo mode (video files)
-      - DEMO_MODE=true
-      - VIDEO_DIR=/app/videos
-      - DEMO_LOOP=true
+      # Opsi C: Demo mode (video files, tanpa RTSP)
+      # - DEMO_MODE=true
+      # - VIDEO_DIR=/app/videos
+      # - DEMO_LOOP=true
+
+      # Opsi D: CCTV simulator (video di-loop via camsim → mediamtx sebagai RTSP)
+      - CAMERAS=[{"id":"CAM-01","rtsp_url":"rtsp://mediamtx:8554/cam1"},{"id":"CAM-02","rtsp_url":"rtsp://mediamtx:8554/cam2"},{"id":"CAM-03","rtsp_url":"rtsp://mediamtx:8554/cam3"}]
+
       - RUSTFS_ENDPOINT=http://rustfs:9000
-      - RUSTFS_ACCESS_KEY=rustfsadmin
-      - RUSTFS_SECRET_KEY=rustfsadmin
+      - RUSTFS_ACCESS_KEY=QRSSaQVq8Rue4AnjHXJT
+      - RUSTFS_SECRET_KEY=4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme
       - RUSTFS_BUCKET=simapd-frames
     depends_on:
-      redis: { condition: service_healthy }
-      rustfs: { condition: service_healthy }
+      redis:     { condition: service_healthy }
+      rustfs:    { condition: service_healthy }
+      mediamtx:  { condition: service_started }
     volumes:
       - ./ai-service/models:/app/models:ro   # YOLO .pt file (read-only)
-      - ./videos:/app/videos:ro   # ← baru: mount folder videos (read-only)
+      - ./videos:/app/videos:ro   # ← baru: mount folder videos (read-only, dipakai Opsi C)
     # Uncomment untuk GPU:
     # deploy:
     #   resources:

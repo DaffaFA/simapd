@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, HttpCode, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, HttpCode, ParseUUIDPipe, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Response } from 'express';
 import { SpService } from './sp.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -56,5 +57,19 @@ export class SpController {
   @Roles() // Allow any authenticated user
   async findAll(@Query('personnel_id') personnelId?: string) {
     return this.spService.findAll(personnelId);
+  }
+
+  @Get(':id/letter')
+  @Roles() // Allowed for safety officer and admin, or just authenticated user? 
+  // Let's use @Roles() to allow authenticated user, or match others. The class has Roles('Safety Officer', 'admin').
+  async downloadSpLetter(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Res() res: Response,
+  ) {
+    const pdf = await this.spService.generateLetter(id, user.username);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="surat_peringatan_${id}.pdf"`);
+    res.send(pdf);
   }
 }

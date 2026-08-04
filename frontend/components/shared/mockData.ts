@@ -1,18 +1,18 @@
 import type { Violation, Personnel, AnalyticsDay } from './types';
 
 export const mockViolations: Violation[] = [
-  { id: 'VIO-0041', trackId: 'TRK-012', time: '14:23:07', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm', 'Rompi'], status: 'linked', personnelName: 'Budi Santoso', personnelId: 'EMP-021', cameraId: 'CAM-01', zone: 'ZONA A' },
-  { id: 'VIO-0040', trackId: 'TRK-008', time: '14:21:44', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Rompi'], status: 'linked', personnelName: 'Ahmad Fauzi', personnelId: 'EMP-014', cameraId: 'CAM-02', zone: 'ZONA B' },
-  { id: 'VIO-0039', trackId: 'TRK-019', time: '14:19:31', role: 'Supervisor', helmColor: 'white', apdMissing: ['Helm'], status: 'unlinked', cameraId: 'CAM-01', zone: 'ZONA A' },
-  { id: 'VIO-0038', trackId: 'TRK-005', time: '14:15:02', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Sepatu'], status: 'linked', personnelName: 'Eko Prasetyo', personnelId: 'EMP-007', cameraId: 'CAM-03', zone: 'ZONA C' },
-  { id: 'VIO-0037', trackId: 'TRK-023', time: '14:12:18', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm', 'Sepatu'], status: 'unlinked', cameraId: 'CAM-02', zone: 'ZONA B' },
-  { id: 'VIO-0036', trackId: 'TRK-011', time: '14:08:55', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Rompi', 'Sepatu'], status: 'linked', personnelName: 'Slamet Widodo', personnelId: 'EMP-033', cameraId: 'CAM-04', zone: 'ZONA D' },
-  { id: 'VIO-0035', trackId: 'TRK-007', time: '14:04:22', role: 'Safety Officer', helmColor: 'green', apdMissing: ['Rompi'], status: 'linked', personnelName: 'Hendra Kusuma', personnelId: 'EMP-002', cameraId: 'CAM-01', zone: 'ZONA A' },
-  { id: 'VIO-0034', trackId: 'TRK-031', time: '14:01:09', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm'], status: 'unlinked', cameraId: 'CAM-03', zone: 'ZONA C' },
-  { id: 'VIO-0033', trackId: 'TRK-016', time: '13:58:47', role: 'Supervisor', helmColor: 'white', apdMissing: ['Sepatu'], status: 'linked', personnelName: 'Doni Setiawan', personnelId: 'EMP-009', cameraId: 'CAM-02', zone: 'ZONA B' },
-  { id: 'VIO-0032', trackId: 'TRK-004', time: '13:55:33', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm', 'Rompi', 'Sepatu'], status: 'linked', personnelName: 'Rudi Hartono', personnelId: 'EMP-041', cameraId: 'CAM-04', zone: 'ZONA D' },
-  { id: 'VIO-0031', trackId: 'TRK-027', time: '13:50:14', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Rompi'], status: 'unlinked', cameraId: 'CAM-01', zone: 'ZONA A' },
-  { id: 'VIO-0030', trackId: 'TRK-018', time: '13:47:02', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm'], status: 'linked', personnelName: 'Wahyu Nugroho', personnelId: 'EMP-025', cameraId: 'CAM-02', zone: 'ZONA B' },
+  { id: 'VIO-0041', violationCode: 'VIO-0041', trackId: 'TRK-012', time: '14:23:07', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm', 'Rompi'], status: 'linked', personnelName: 'Budi Santoso', personnelId: 'EMP-021', cameraId: 'CAM-01', zone: 'ZONA A' },
+  { id: 'VIO-0040', violationCode: 'VIO-0040', trackId: 'TRK-008', time: '14:21:44', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Rompi'], status: 'linked', personnelName: 'Ahmad Fauzi', personnelId: 'EMP-014', cameraId: 'CAM-02', zone: 'ZONA B' },
+  { id: 'VIO-0039', violationCode: 'VIO-0039', trackId: 'TRK-019', time: '14:19:31', role: 'Supervisor', helmColor: 'white', apdMissing: ['Helm'], status: 'unlinked', cameraId: 'CAM-01', zone: 'ZONA A' },
+  { id: 'VIO-0038', violationCode: 'VIO-0038', trackId: 'TRK-005', time: '14:15:02', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Sepatu'], status: 'linked', personnelName: 'Eko Prasetyo', personnelId: 'EMP-007', cameraId: 'CAM-03', zone: 'ZONA C' },
+  { id: 'VIO-0037', violationCode: 'VIO-0037', trackId: 'TRK-023', time: '14:12:18', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm', 'Sepatu'], status: 'unlinked', cameraId: 'CAM-02', zone: 'ZONA B' },
+  { id: 'VIO-0036', violationCode: 'VIO-0036', trackId: 'TRK-011', time: '14:08:55', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Rompi', 'Sepatu'], status: 'linked', personnelName: 'Slamet Widodo', personnelId: 'EMP-033', cameraId: 'CAM-04', zone: 'ZONA D' },
+  { id: 'VIO-0035', violationCode: 'VIO-0035', trackId: 'TRK-007', time: '14:04:22', role: 'Safety Officer', helmColor: 'green', apdMissing: ['Rompi'], status: 'linked', personnelName: 'Hendra Kusuma', personnelId: 'EMP-002', cameraId: 'CAM-01', zone: 'ZONA A' },
+  { id: 'VIO-0034', violationCode: 'VIO-0034', trackId: 'TRK-031', time: '14:01:09', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm'], status: 'unlinked', cameraId: 'CAM-03', zone: 'ZONA C' },
+  { id: 'VIO-0033', violationCode: 'VIO-0033', trackId: 'TRK-016', time: '13:58:47', role: 'Supervisor', helmColor: 'white', apdMissing: ['Sepatu'], status: 'linked', personnelName: 'Doni Setiawan', personnelId: 'EMP-009', cameraId: 'CAM-02', zone: 'ZONA B' },
+  { id: 'VIO-0032', violationCode: 'VIO-0032', trackId: 'TRK-004', time: '13:55:33', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm', 'Rompi', 'Sepatu'], status: 'linked', personnelName: 'Rudi Hartono', personnelId: 'EMP-041', cameraId: 'CAM-04', zone: 'ZONA D' },
+  { id: 'VIO-0031', violationCode: 'VIO-0031', trackId: 'TRK-027', time: '13:50:14', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Rompi'], status: 'unlinked', cameraId: 'CAM-01', zone: 'ZONA A' },
+  { id: 'VIO-0030', violationCode: 'VIO-0030', trackId: 'TRK-018', time: '13:47:02', role: 'Pekerja', helmColor: 'yellow', apdMissing: ['Helm'], status: 'linked', personnelName: 'Wahyu Nugroho', personnelId: 'EMP-025', cameraId: 'CAM-02', zone: 'ZONA B' },
 ];
 
 export const mockPersonnel: Personnel[] = [

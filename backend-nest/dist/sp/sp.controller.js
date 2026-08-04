@@ -49,6 +49,12 @@ let SpController = class SpController {
     async findAll(personnelId) {
         return this.spService.findAll(personnelId);
     }
+    async downloadSpLetter(id, user, res) {
+        const pdf = await this.spService.generateLetter(id, user.username);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="surat_peringatan_${id}.pdf"`);
+        res.send(pdf);
+    }
 };
 exports.SpController = SpController;
 __decorate([
@@ -100,6 +106,16 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], SpController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)(':id/letter'),
+    (0, roles_decorator_1.Roles)(),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
+    __param(2, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, user_entity_1.User, Object]),
+    __metadata("design:returntype", Promise)
+], SpController.prototype, "downloadSpLetter", null);
 exports.SpController = SpController = __decorate([
     (0, swagger_1.ApiTags)('SP Management'),
     (0, swagger_1.ApiBearerAuth)(),

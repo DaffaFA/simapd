@@ -39,5 +39,7 @@ export declare class ViolationsController {
         message: string;
     }>;
     getViolationFrame(id: string, res: Response): Promise<void>;
+    rejectViolation(id: string, reason: string, user: User): Promise<ViolationResponseDto>;
+    confirmViolation(id: string, user: User): Promise<ViolationResponseDto>;
     remove(id: string): Promise<void>;
 }

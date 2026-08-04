@@ -35,16 +35,24 @@ let AnalyticsController = class AnalyticsController {
     async exportCsv(q, res) {
         const csv = await this.service.exportCsv(q);
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="violations_${new Date().toISOString().slice(0, 10)}.csv"`);
-        res.send('\uFEFF' + csv);
+        res.setHeader('Content-Disposition', `attachment; filename="laporan_apd_${q.date_from ?? 'all'}.csv"`);
+        res.send(Buffer.from('\uFEFF' + csv, 'utf8'));
     }
     async exportPdf(q, res) {
-        const from = q.date_from ?? new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
-        const to = q.date_to ?? new Date().toISOString().slice(0, 10);
+        const from = q.date_from;
+        const to = q.date_to;
         const pdf = await this.service.exportPdf(from, to);
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="laporan_apd_${to}.pdf"`);
+        res.setHeader('Content-Disposition', `attachment; filename="laporan_apd_${to ?? 'all'}.pdf"`);
         res.send(pdf);
+    }
+    async exportExcel(q, res) {
+        const from = q.date_from;
+        const to = q.date_to;
+        const buffer = await this.service.exportExcel(from, to);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="laporan_apd_${from ?? 'all'}.xlsx"`);
+        res.send(buffer);
     }
 };
 exports.AnalyticsController = AnalyticsController;
@@ -71,6 +79,14 @@ __decorate([
     __metadata("design:paramtypes", [analytics_query_dto_1.AnalyticsQueryDto, Object]),
     __metadata("design:returntype", Promise)
 ], AnalyticsController.prototype, "exportPdf", null);
+__decorate([
+    (0, common_1.Get)('export/excel'),
+    __param(0, (0, common_1.Query)()),
+    __param(1, (0, common_1.Res)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [analytics_query_dto_1.AnalyticsQueryDto, Object]),
+    __metadata("design:returntype", Promise)
+], AnalyticsController.prototype, "exportExcel", null);
 exports.AnalyticsController = AnalyticsController = __decorate([
     (0, swagger_1.ApiTags)('Analytics'),
     (0, swagger_1.ApiBearerAuth)(),

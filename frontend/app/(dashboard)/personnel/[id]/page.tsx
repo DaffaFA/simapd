@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 // Mock AuthContext for now, wait, does @/context/AuthContext exist? Let's check imports
-import { getPersonnel, updatePersonnel, getViolationsByPersonnel, getSPRecordsByPersonnel, getViolationFrameUrl } from '@/src/lib/api'
+import { getPersonnel, updatePersonnel, getViolationsByPersonnel, getSPRecordsByPersonnel, getViolationFrameUrl, spApi } from '@/src/lib/api'
 import type { Personnel, Violation, SpRecord, UpdatePersonnelDto } from '@/src/types/simapd'
 
 // Let's create a stub useAuth if we don't know where it is, or we'll just check later.
@@ -23,31 +23,80 @@ export default function PersonnelDetailPage() {
   const [violations,  setViolations]  = useState<Violation[]>([])
   const [spRecords,   setSpRecords]   = useState<SpRecord[]>([])
   const [loading,     setLoading]     = useState(true)
+  const [spError,     setSpError]     = useState<string | null>(null)
+  const [violError,   setViolError]   = useState<string | null>(null)
   const [editMode,    setEditMode]    = useState(false)
   const [editData,    setEditData]    = useState<UpdatePersonnelDto>({})
   const [saving,      setSaving]      = useState(false)
   const [saveError,   setSaveError]   = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalViol,   setTotalViol]   = useState(0)
+  const [showSpModal, setShowSpModal] = useState(false)
+  const [spLevel, setSpLevel]         = useState<'SP1' | 'SP2' | 'SP3'>('SP1')
+  const [spNotes, setSpNotes]         = useState('')
+  const [issuingSp, setIssuingSp]     = useState(false)
+  const [issueSpError, setIssueSpError] = useState<string | null>(null)
 
-  const canEdit = user?.role === 'Safety Officer' || user?.role === 'admin'
+  const canEdit = !user || user?.role === 'Safety Officer' || user?.role === 'admin' || user?.role === 'Supervisor'
+
+  const handleIssueSp = async () => {
+    if (!personnel) return
+    setIssuingSp(true)
+    setIssueSpError(null)
+    try {
+      await spApi.issue({ personnel_id: personnel.id, level: spLevel, notes: spNotes })
+      setShowSpModal(false)
+      setSpNotes('')
+      const sp = await getSPRecordsByPersonnel(id)
+      setSpRecords(sp ?? [])
+    } catch (e: any) {
+      setIssueSpError(e.message ?? 'Gagal menerbitkan surat peringatan')
+    } finally {
+      setIssuingSp(false)
+    }
+  }
 
   useEffect(() => {
     if (!id) return
-    Promise.all([
-      getPersonnel(id),
-      getViolationsByPersonnel(id, currentPage),
-      getSPRecordsByPersonnel(id),
-    ]).then(([p, v, sp]) => {
-      setPersonnel(p)
-      setEditData({ full_name: p.full_name, role: p.role, helm_color: p.helm_color,
-                    department: p.department, is_active: p.is_active })
-      // v.items is the array based on PaginatedResponse interface
-      setViolations(v.items)
-      setTotalViol(v.total)
-      setSpRecords(sp)
-    }).catch(console.error)
+    setLoading(true)
+    setSpError(null)
+    setViolError(null)
+
+    getPersonnel(id)
+      .then(p => {
+        setPersonnel(p)
+        setEditData({
+          full_name: p.full_name,
+          role: p.role,
+          helm_color: p.helm_color,
+          department: p.department,
+          is_active: p.is_active,
+        })
+      })
+      .catch(err => {
+        console.error('Failed to fetch personnel:', err)
+        setPersonnel(null)
+      })
       .finally(() => setLoading(false))
+
+    getViolationsByPersonnel(id, currentPage)
+      .then(v => {
+        setViolations(v.items ?? [])
+        setTotalViol(v.total ?? 0)
+      })
+      .catch(err => {
+        console.error('Failed to fetch violations:', err)
+        setViolError(err.message ?? 'Gagal memuat riwayat pelanggaran')
+      })
+
+    getSPRecordsByPersonnel(id)
+      .then(sp => {
+        setSpRecords(sp ?? [])
+      })
+      .catch(err => {
+        console.error('Failed to fetch SP records:', err)
+        setSpError(err.message ?? 'Gagal memuat riwayat surat peringatan')
+      })
   }, [id, currentPage])
 
   const handleSave = async () => {
@@ -62,6 +111,19 @@ export default function PersonnelDetailPage() {
       setSaveError(e.message ?? 'Gagal menyimpan')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const downloadSpLetter = async (spId: string, spNumber: string) => {
+    try {
+      const blob = await spApi.downloadLetter(spId)
+      const a    = document.createElement('a')
+      a.href     = URL.createObjectURL(blob)
+      a.download = `${spNumber.replace(/\//g, '-')}.pdf`
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch (e) {
+      alert('Gagal mengunduh surat peringatan')
     }
   }
 
@@ -185,11 +247,25 @@ export default function PersonnelDetailPage() {
 
       {/* ── SP Records ─────────────────────────────────────────────────────── */}
       <div className="bg-[#111827] border border-[#1E2D3D] rounded-xl p-6">
-        <h2 className="font-medium text-lg mb-4 text-white">
-          Riwayat Surat Peringatan
-          <span className="ml-2 text-sm text-gray-500">({spRecords.length} total)</span>
-        </h2>
-        {spRecords.length === 0 ? (
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-medium text-lg text-white">
+            Riwayat Surat Peringatan
+            <span className="ml-2 text-sm text-gray-500">({spRecords.length} total)</span>
+          </h2>
+          {canEdit && (
+            <button
+              onClick={() => setShowSpModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F97316] text-white rounded-lg text-xs font-semibold hover:bg-[#EA580C] transition-colors"
+            >
+              + Terbitkan SP
+            </button>
+          )}
+        </div>
+        {spError ? (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm flex items-center gap-2">
+            <span>⚠️</span> {spError}
+          </div>
+        ) : spRecords.length === 0 ? (
           <p className="text-gray-500 text-sm">Tidak ada surat peringatan</p>
         ) : (
           <div className="space-y-2">
@@ -202,13 +278,24 @@ export default function PersonnelDetailPage() {
                   </span>
                   <span className="ml-2 text-sm text-gray-300">{sp.sp_number}</span>
                 </div>
-                <div className="text-right text-xs text-gray-400">
-                  <div>Diterbitkan: {new Date(sp.issued_at).toLocaleDateString('id-ID')}</div>
-                  <div>Berlaku s/d: {new Date(sp.expires_at).toLocaleDateString('id-ID')}</div>
+                <div className="flex items-center gap-4">
+                  <div className="text-right text-xs text-gray-400">
+                    <div>Diterbitkan: {new Date(sp.issued_at).toLocaleDateString('id-ID')}</div>
+                    <div>Berlaku s/d: {new Date(sp.expires_at).toLocaleDateString('id-ID')}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs px-2 py-1 rounded ${sp.is_active ? 'bg-red-500/20 text-red-500' : 'bg-gray-800 text-gray-400'}`}>
+                      {sp.is_active ? 'Aktif' : 'Selesai'}
+                    </span>
+                    <button
+                      onClick={() => downloadSpLetter(sp.id, sp.sp_number)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1E2D3D] text-gray-300 border border-[#2D3F54] rounded-lg hover:bg-[#2A3F5A] transition-colors"
+                      title="Download Surat Peringatan"
+                    >
+                      📄 PDF
+                    </button>
+                  </div>
                 </div>
-                <span className={`text-xs px-2 py-1 rounded ${sp.is_active ? 'bg-red-500/20 text-red-500' : 'bg-gray-800 text-gray-400'}`}>
-                  {sp.is_active ? 'Aktif' : 'Selesai'}
-                </span>
               </div>
             ))}
           </div>
@@ -221,7 +308,11 @@ export default function PersonnelDetailPage() {
           Riwayat Pelanggaran APD
           <span className="ml-2 text-sm text-gray-500">({totalViol} total)</span>
         </h2>
-        {violations.length === 0 ? (
+        {violError ? (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm flex items-center gap-2">
+            <span>⚠️</span> {violError}
+          </div>
+        ) : violations.length === 0 ? (
           <p className="text-gray-500 text-sm">Tidak ada riwayat pelanggaran</p>
         ) : (
           <div className="overflow-x-auto">
@@ -252,6 +343,7 @@ export default function PersonnelDetailPage() {
                         <ViolationFrame
                           violationId={v.id}
                           hasFrame={true}
+                          frameUrl={v.frame_path}
                           size="thumb"
                           className="w-10 h-10 object-cover rounded cursor-pointer border border-[#1E2D3D]"
                         />
@@ -282,6 +374,78 @@ export default function PersonnelDetailPage() {
           </div>
         )}
       </div>
+
+      {/* ── Modal Terbitkan Surat Peringatan (SP) ───────────────────────── */}
+      {showSpModal && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+          onClick={e => { if (e.target === e.currentTarget) setShowSpModal(false) }}
+        >
+          <div className="bg-[#111827] border border-[#1E2D3D] rounded-xl p-6 w-full max-w-md space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-white">Terbitkan Surat Peringatan</h3>
+              <button
+                onClick={() => setShowSpModal(false)}
+                className="text-gray-400 hover:text-white text-lg font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {issueSpError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm">
+                {issueSpError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  Tingkat SP
+                </label>
+                <select
+                  value={spLevel}
+                  onChange={e => setSpLevel(e.target.value as 'SP1' | 'SP2' | 'SP3')}
+                  className="w-full bg-[#0D1117] border border-[#1E2D3D] text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316]"
+                >
+                  <option value="SP1">SP1 — Surat Peringatan Pertama</option>
+                  <option value="SP2">SP2 — Surat Peringatan Kedua</option>
+                  <option value="SP3">SP3 — Surat Peringatan Ketiga</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                  Catatan / Alasan Penerbitan (Opsional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={spNotes}
+                  onChange={e => setSpNotes(e.target.value)}
+                  placeholder="Masukkan catatan atau alasan penerbitan SP..."
+                  className="w-full bg-[#0D1117] border border-[#1E2D3D] text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316] resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                onClick={() => setShowSpModal(false)}
+                className="flex-1 px-4 py-2 border border-[#1E2D3D] text-gray-300 rounded-lg text-sm hover:bg-[#1A2634] transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleIssueSp}
+                disabled={issuingSp}
+                className="flex-1 px-4 py-2 bg-[#F97316] text-white rounded-lg text-sm font-semibold hover:bg-[#EA580C] disabled:opacity-50 transition-colors"
+              >
+                {issuingSp ? 'Menerbitkan...' : 'Terbitkan SP'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

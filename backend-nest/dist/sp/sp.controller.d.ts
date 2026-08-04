@@ -1,3 +1,4 @@
+import { Response } from 'express';
 import { SpService } from './sp.service';
 import { IssueSpDto } from './dto/issue-sp.dto';
 import { SpConfigUpdateDto } from './dto/sp-config-update.dto';
@@ -12,4 +13,5 @@ export declare class SpController {
     updateConfig(dto: SpConfigUpdateDto, user: User): Promise<import("./entities/sp-config.entity").SpConfig>;
     getActive(page?: string, pageSize?: string): Promise<PaginatedResponseDto<import("./entities/sp-record.entity").SpRecord>>;
     findAll(personnelId?: string): Promise<import("./entities/sp-record.entity").SpRecord[]>;
+    downloadSpLetter(id: string, user: User, res: Response): Promise<void>;
 }

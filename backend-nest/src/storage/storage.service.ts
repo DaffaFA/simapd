@@ -2,9 +2,10 @@ import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import {
   S3Client, PutObjectCommand, GetObjectCommand,
-  CreateBucketCommand, HeadBucketCommand,
+  CreateBucketCommand, HeadBucketCommand, PutBucketPolicyCommand,
 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { Readable } from 'stream'
 
 @Injectable()
 export class StorageService implements OnApplicationBootstrap {
@@ -17,8 +18,8 @@ export class StorageService implements OnApplicationBootstrap {
     this.s3 = new S3Client({
       endpoint:         cfg.get('RUSTFS_ENDPOINT') ?? 'http://rustfs:9000',
       credentials: {
-        accessKeyId:     cfg.get('RUSTFS_ACCESS_KEY') ?? 'rustfsadmin',
-        secretAccessKey: cfg.get('RUSTFS_SECRET_KEY') ?? 'rustfsadmin',
+        accessKeyId:     cfg.get('RUSTFS_ACCESS_KEY') ?? 'QRSSaQVq8Rue4AnjHXJT',
+        secretAccessKey: cfg.get('RUSTFS_SECRET_KEY') ?? '4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme',
       },
       region:          'us-east-1',   // wajib diisi, nilai bebas untuk RustFS
       forcePathStyle:  true,          // wajib untuk S3-compatible (bukan AWS)
@@ -37,6 +38,27 @@ export class StorageService implements OnApplicationBootstrap {
       } catch (e: any) {
         this.logger.warn(`Gagal buat bucket: ${e.message}`)
       }
+    }
+
+    // Set public-read policy agar unsigned URL bisa diakses browser
+    try {
+      const policy = JSON.stringify({
+        Version: '2012-10-17',
+        Statement: [{
+          Sid: 'PublicRead',
+          Effect: 'Allow',
+          Principal: '*',
+          Action: ['s3:GetObject'],
+          Resource: [`arn:aws:s3:::${this.bucket}/*`],
+        }],
+      })
+      await this.s3.send(new PutBucketPolicyCommand({
+        Bucket: this.bucket,
+        Policy: policy,
+      }))
+      this.logger.log(`Bucket policy public-read diterapkan: ${this.bucket}`)
+    } catch (e: any) {
+      this.logger.warn(`Gagal set bucket policy: ${e.message}`)
     }
   }
 
@@ -59,26 +81,31 @@ export class StorageService implements OnApplicationBootstrap {
   }
 
   /**
-   * Generate presigned URL yang berlaku 5 menit.
-   * Frontend dapat langsung akses URL ini tanpa perlu JWT.
+   * Stream object dari RustFS sebagai Node.js Readable.
+   * Gunakan ini untuk proxy ke browser — JANGAN gunakan presigned URL redirect
+   * karena presigned URL berisi hostname Docker yang tidak accessible dari browser.
    */
-  async getPresignedUrl(key: string, expiresInSeconds = 300): Promise<string> {
-    const cmd = new GetObjectCommand({ Bucket: this.bucket, Key: key })
-    return getSignedUrl(this.s3, cmd, { expiresIn: expiresInSeconds })
-  }
-
-  /**
-   * Stream object langsung ke response (untuk proxy download).
-   * Gunakan ini sebagai fallback jika presigned URL tidak bisa digunakan.
-   */
-  async streamObject(key: string): Promise<NodeJS.ReadableStream | null> {
+  async streamObject(key: string): Promise<Readable | null> {
     try {
       const res = await this.s3.send(
         new GetObjectCommand({ Bucket: this.bucket, Key: key })
       )
-      return res.Body as NodeJS.ReadableStream
-    } catch {
+      if (!res.Body) return null
+
+      // AWS SDK v3 Body adalah SdkStream — cast ke Readable untuk Node.js
+      return res.Body as unknown as Readable
+    } catch (e: any) {
+      this.logger.warn(`streamObject(${key}) gagal: ${e.message}`)
       return null
     }
+  }
+
+  async objectExists(key: string): Promise<boolean> {
+    try {
+      await this.s3.send(
+        new GetObjectCommand({ Bucket: this.bucket, Key: key })
+      )
+      return true
+    } catch { return false }
   }
 }

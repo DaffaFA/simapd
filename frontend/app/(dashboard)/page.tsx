@@ -3,27 +3,30 @@
 import { useState, useEffect } from 'react';
 import { Shield, AlertTriangle, Users, FileWarning } from 'lucide-react';
 import { StatCard } from '@/components/shared/StatCard';
-import { CameraFeed } from '@/components/shared/CameraFeed';
 import { ViolationCard } from '@/components/shared/ViolationCard';
 import { analyticsApi, violationApi } from '@/src/lib/api';
 import { useWebSocket } from '@/src/lib/useWebSocket';
 import { mapViolation } from '@/src/lib/mappers';
 import type { Violation } from '@/components/shared/types';
 import type { ComplianceSummary } from '@/src/types/simapd';
+import { CameraStreamCanvas } from '@/components/stream/CameraStreamCanvas';
 
 export default function Dashboard() {
   const [violations, setViolations] = useState<Violation[]>([]);
   const [summary, setSummary] = useState<ComplianceSummary | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { connected, recentAlerts, lastDetections } = useWebSocket({
-    onViolationAlert: () => {
-      // Refetch violations when new alert arrives
+  const { isConnected, connected, recentAlerts, lastDetections, latestFrames } = useWebSocket();
+  const [focusedCam, setFocusedCam] = useState<string | null>(null);
+  const activeCams = Array.from(latestFrames.keys());
+
+  useEffect(() => {
+    if (recentAlerts.length > 0) {
       violationApi.list({ page_size: '8', page: '1' })
         .then(res => setViolations(res.items.map(mapViolation)))
         .catch(() => {});
-    },
-  });
+    }
+  }, [recentAlerts]);
 
   useEffect(() => {
     async function load() {
@@ -53,7 +56,7 @@ export default function Dashboard() {
   const spDetail = `SP1: ${summary?.sp1_count ?? 0} · SP2: ${summary?.sp2_count ?? 0}`;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="p-6 space-y-6">
       {/* Stat Cards */}
       <div style={{ display: 'flex', gap: 16 }}>
         <StatCard
@@ -94,64 +97,110 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Main content: camera + live feed */}
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-        {/* Camera Feed — 60% */}
-        <div style={{ flex: 6, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-              Kamera Aktif
-            </h2>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {['CAM-01', 'CAM-02', 'CAM-03', 'CAM-04'].map((cam, i) => (
-                <button
-                  key={cam}
-                  style={{
-                    fontFamily: 'JetBrains Mono, monospace',
-                    fontSize: 10,
-                    padding: '3px 8px',
-                    borderRadius: 4,
-                    border: `1px solid ${i === 0 ? '#F97316' : '#1E2D3D'}`,
-                    background: i === 0 ? 'rgba(249,115,22,0.1)' : 'transparent',
-                    color: i === 0 ? '#F97316' : '#64748B',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {cam}
-                </button>
-              ))}
-            </div>
-          </div>
-          <CameraFeed detections={lastDetections} />
-        </div>
-
-        {/* Live Violation Feed — 40% */}
-        <div style={{ flex: 4, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-              Live Violation Feed
-            </h2>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#EF4444' }}>
-              {violations.length} total
+      {/* ── Live Demo Stream ────────────────────────────────────────────── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">Live Monitor</h2>
+          <div className="flex items-center gap-2 text-sm">
+            <span className={`w-2 h-2 rounded-full ${
+              isConnected && activeCams.length > 0
+                ? 'bg-green-500 animate-pulse'
+                : 'bg-gray-300'
+            }`} />
+            <span className="text-gray-500">
+              {activeCams.length > 0
+                ? `${activeCams.length} kamera aktif`
+                : 'Menunggu stream...'}
             </span>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 480, overflowY: 'auto', paddingRight: 4 }}>
-            {loading ? (
-              <div style={{ padding: 20, textAlign: 'center', fontSize: 12, color: '#64748B', fontFamily: 'DM Sans, sans-serif' }}>
-                Memuat data...
+        </div>
+
+        <div className="bg-gray-950 rounded-xl overflow-hidden">
+          {activeCams.length === 0 ? (
+            // Placeholder saat demo belum jalan
+            <div className="aspect-video flex flex-col items-center justify-center text-gray-600 gap-3">
+              <span className="text-4xl">📹</span>
+              <p className="text-sm">Jalankan AI service dalam DEMO_MODE=true</p>
+              <code className="text-xs bg-gray-900 px-3 py-1.5 rounded text-gray-400">
+                DEMO_MODE=true VIDEO_DIR=./videos python main.py
+              </code>
+            </div>
+          ) : focusedCam ? (
+            // Mode fokus: satu kamera fullscreen
+            <div>
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-900">
+                <button
+                  onClick={() => setFocusedCam(null)}
+                  className="text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  ← Semua
+                </button>
+                <span className="text-xs text-gray-500">|</span>
+                <span className="text-xs font-mono text-gray-300">{focusedCam}</span>
               </div>
-            ) : violations.length === 0 ? (
-              <div style={{ padding: 20, textAlign: 'center', fontSize: 12, color: '#64748B', fontFamily: 'DM Sans, sans-serif' }}>
-                Tidak ada pelanggaran hari ini
+              <CameraStreamCanvas
+                cameraId={focusedCam}
+                latestFrame={latestFrames.get(focusedCam)}
+                className="w-full"
+              />
+            </div>
+          ) : (
+            // Grid mode: semua kamera aktif
+            <div className={`grid gap-0.5 p-0.5 ${
+              activeCams.length === 1 ? 'grid-cols-1'
+              : activeCams.length === 2 ? 'grid-cols-2'
+              : 'grid-cols-2'
+            }`}>
+              {activeCams.map(camId => (
+                <div
+                  key={camId}
+                  className="cursor-pointer group"
+                  onClick={() => setFocusedCam(camId)}
+                >
+                  <CameraStreamCanvas
+                    cameraId={camId}
+                    latestFrame={latestFrames.get(camId)}
+                    className="w-full group-hover:brightness-110 transition-all"
+                    showLabels
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {activeCams.length > 1 && !focusedCam && (
+          <p className="text-xs text-gray-400 mt-2 text-center">
+            Klik kamera untuk fokus · {activeCams.length} video sedang diproses
+          </p>
+        )}
+      </div>
+
+      {/* ── Recent alerts (ringkas) ─────────────────────────────────────── */}
+      {recentAlerts.length > 0 && (
+        <div>
+          <h2 className="text-lg font-semibold mb-3">Alert Terbaru</h2>
+          <div className="space-y-2">
+            {recentAlerts.slice(0, 3).map((alert, i) => (
+              <div key={i}
+                className="flex items-center gap-3 p-3 bg-red-50 border border-red-100 rounded-lg text-sm">
+                <span className="text-red-400 text-lg shrink-0">⚠</span>
+                <div className="min-w-0">
+                  <p className="font-medium text-red-800 truncate">
+                    {alert.camera_id} — {(alert.missing_ppe ?? [])
+                      .map((p: string) =>
+                        p === 'helm' ? 'Helm' : p === 'vest' ? 'Rompi' : 'Sepatu'
+                      ).join(', ')} tidak terpasang
+                  </p>
+                  <p className="text-xs text-red-400">
+                    {new Date(alert.timestamp).toLocaleTimeString('id-ID')}
+                  </p>
+                </div>
               </div>
-            ) : (
-              violations.map(v => (
-                <ViolationCard key={v.id} violation={v} />
-              ))
-            )}
+            ))}
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

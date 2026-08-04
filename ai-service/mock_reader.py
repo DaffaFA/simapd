@@ -18,7 +18,7 @@ def run(camera_id: str, redis_pub):
         'event': 'detection', 'track_id': track_id,
         'role_label': {'Kuning':'Pekerja','Putih':'Supervisor','Hijau':'Safety Officer'}[helm],
         'helm_color': helm, 'missing_ppe': missing, 'is_compliant': len(missing)==0,
-        'timestamp': datetime.now(timezone.utc).isoformat(),
+        'timestamp': datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f') + 'Z',
         'bbox': [100,50,200,400], 'camera_id': camera_id, 'confidence': round(random.uniform(0.7,0.99),2),
         'missing_helm': 'helm' in missing, 'missing_vest': 'vest' in missing,
         'missing_shoes': 'sepatu' in missing,

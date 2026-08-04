@@ -14,7 +14,6 @@ exports.StorageService = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const client_s3_1 = require("@aws-sdk/client-s3");
-const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
 let StorageService = StorageService_1 = class StorageService {
     constructor(cfg) {
         this.cfg = cfg;
@@ -23,8 +22,8 @@ let StorageService = StorageService_1 = class StorageService {
         this.s3 = new client_s3_1.S3Client({
             endpoint: cfg.get('RUSTFS_ENDPOINT') ?? 'http://rustfs:9000',
             credentials: {
-                accessKeyId: cfg.get('RUSTFS_ACCESS_KEY') ?? 'rustfsadmin',
-                secretAccessKey: cfg.get('RUSTFS_SECRET_KEY') ?? 'rustfsadmin',
+                accessKeyId: cfg.get('RUSTFS_ACCESS_KEY') ?? 'QRSSaQVq8Rue4AnjHXJT',
+                secretAccessKey: cfg.get('RUSTFS_SECRET_KEY') ?? '4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme',
             },
             region: 'us-east-1',
             forcePathStyle: true,
@@ -44,6 +43,26 @@ let StorageService = StorageService_1 = class StorageService {
                 this.logger.warn(`Gagal buat bucket: ${e.message}`);
             }
         }
+        try {
+            const policy = JSON.stringify({
+                Version: '2012-10-17',
+                Statement: [{
+                        Sid: 'PublicRead',
+                        Effect: 'Allow',
+                        Principal: '*',
+                        Action: ['s3:GetObject'],
+                        Resource: [`arn:aws:s3:::${this.bucket}/*`],
+                    }],
+            });
+            await this.s3.send(new client_s3_1.PutBucketPolicyCommand({
+                Bucket: this.bucket,
+                Policy: policy,
+            }));
+            this.logger.log(`Bucket policy public-read diterapkan: ${this.bucket}`);
+        }
+        catch (e) {
+            this.logger.warn(`Gagal set bucket policy: ${e.message}`);
+        }
     }
     async uploadFrame(key, buffer, contentType = 'image/jpeg') {
         await this.s3.send(new client_s3_1.PutObjectCommand({
@@ -54,17 +73,25 @@ let StorageService = StorageService_1 = class StorageService {
         }));
         return key;
     }
-    async getPresignedUrl(key, expiresInSeconds = 300) {
-        const cmd = new client_s3_1.GetObjectCommand({ Bucket: this.bucket, Key: key });
-        return (0, s3_request_presigner_1.getSignedUrl)(this.s3, cmd, { expiresIn: expiresInSeconds });
-    }
     async streamObject(key) {
         try {
             const res = await this.s3.send(new client_s3_1.GetObjectCommand({ Bucket: this.bucket, Key: key }));
+            if (!res.Body)
+                return null;
             return res.Body;
         }
-        catch {
+        catch (e) {
+            this.logger.warn(`streamObject(${key}) gagal: ${e.message}`);
             return null;
+        }
+    }
+    async objectExists(key) {
+        try {
+            await this.s3.send(new client_s3_1.GetObjectCommand({ Bucket: this.bucket, Key: key }));
+            return true;
+        }
+        catch {
+            return false;
         }
     }
 };

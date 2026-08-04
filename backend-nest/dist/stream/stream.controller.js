@@ -18,6 +18,8 @@ const swagger_1 = require("@nestjs/swagger");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const roles_guard_1 = require("../auth/guards/roles.guard");
+const roles_decorator_1 = require("../auth/decorators/roles.decorator");
 const camera_entity_1 = require("./entities/camera.entity");
 const stream_gateway_1 = require("./stream.gateway");
 let StreamController = class StreamController {
@@ -26,7 +28,22 @@ let StreamController = class StreamController {
         this.gateway = gateway;
     }
     async getCameras() {
-        return this.cameraRepo.find({ where: { is_active: true } });
+        return this.cameraRepo.find({ order: { created_at: 'DESC' } });
+    }
+    async createCamera(dto) {
+        return this.cameraRepo.save(this.cameraRepo.create(dto));
+    }
+    async updateCamera(id, dto) {
+        const cam = await this.cameraRepo.findOne({ where: { id } });
+        if (!cam)
+            throw new common_1.NotFoundException('Kamera tidak ditemukan');
+        Object.assign(cam, dto);
+        return this.cameraRepo.save(cam);
+    }
+    async deleteCamera(id) {
+        const result = await this.cameraRepo.delete(id);
+        if (!result.affected)
+            throw new common_1.NotFoundException('Kamera tidak ditemukan');
     }
     getStatus() {
         return {
@@ -72,6 +89,36 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], StreamController.prototype, "getCameras", null);
+__decorate([
+    (0, common_1.Post)('cameras'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, common_1.HttpCode)(201),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], StreamController.prototype, "createCamera", null);
+__decorate([
+    (0, common_1.Patch)('cameras/:id'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], StreamController.prototype, "updateCamera", null);
+__decorate([
+    (0, common_1.Delete)('cameras/:id'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)('admin'),
+    (0, common_1.HttpCode)(204),
+    __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], StreamController.prototype, "deleteCamera", null);
 __decorate([
     (0, common_1.Get)('status'),
     __metadata("design:type", Function),

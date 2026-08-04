@@ -54,7 +54,7 @@ export function useWebSocket() {
   const [wsError,        setWsError]        = useState<string | null>(null)
 
   const wsRef        = useRef<WebSocket | null>(null)
-  const reconnectRef = useRef<ReturnType<typeof setTimeout>>()
+  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retryCount   = useRef(0)
 
   const connect = useCallback(() => {
@@ -163,7 +163,7 @@ export function useWebSocket() {
   useEffect(() => {
     connect()
     return () => {
-      clearTimeout(reconnectRef.current)
+      if (reconnectRef.current) clearTimeout(reconnectRef.current)
       wsRef.current?.close(1000, 'Component unmounted')
     }
   }, [connect])

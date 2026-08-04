@@ -61,6 +61,31 @@ export default function Analytics() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [dateFrom, setDateFrom] = useState(() => new Date(new Date().setDate(1)).toISOString().slice(0, 10));
+  const [dateTo, setDateTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [downloading, setDownloading] = useState<string | null>(null);
+
+  const downloadReport = async (format: 'pdf' | 'excel' | 'csv') => {
+    setDownloading(format);
+    try {
+      const token = localStorage.getItem('access_token') ?? '';
+      const ext   = format === 'excel' ? 'xlsx' : format;
+      const url   = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/analytics/export/${format}?from=${dateFrom}&to=${dateTo}`;
+      const res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error('Export gagal');
+      const blob  = await res.blob();
+      const a     = document.createElement('a');
+      a.href      = URL.createObjectURL(blob);
+      a.download  = `laporan_apd_${dateFrom}_${dateTo}.${ext}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      alert('Export gagal. Coba lagi.');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   useEffect(() => {
     async function load() {
       try {
@@ -106,13 +131,7 @@ export default function Analytics() {
   const avgCompliance = data?.summary?.compliance_rate ?? 0;
   const offenders = data?.offenders ?? [];
 
-  const handleExportPdf = async () => {
-    try { await analyticsApi.exportPdf(); } catch (err) { console.error('PDF export failed:', err); }
-  };
-
-  const handleExportCsv = async () => {
-    try { await analyticsApi.exportCsv(); } catch (err) { console.error('CSV export failed:', err); }
-  };
+  // Removed old handlers
 
   if (loading) {
     return (
@@ -149,15 +168,25 @@ export default function Analytics() {
           ))}
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <button onClick={handleExportCsv} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 12, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
-            <Printer size={13} />
-            Export CSV
-          </button>
-          <button onClick={handleExportPdf} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, border: 'none', background: '#F97316', color: '#fff', fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: 'pointer' }}>
-            <FileDown size={13} />
-            Export PDF
-          </button>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              style={{ background: '#111827', border: '1px solid #1E2D3D', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontFamily: 'DM Sans, sans-serif', colorScheme: 'dark' }} />
+            <span style={{ color: '#64748B', fontSize: 12 }}>s/d</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              style={{ background: '#111827', border: '1px solid #1E2D3D', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontFamily: 'DM Sans, sans-serif', colorScheme: 'dark' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => downloadReport('pdf')} disabled={!!downloading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 6, border: 'none', background: '#EF4444', color: '#fff', fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: downloading ? 'not-allowed' : 'pointer', opacity: downloading === 'pdf' ? 0.5 : 1 }}>
+              📄 PDF
+            </button>
+            <button onClick={() => downloadReport('excel')} disabled={!!downloading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 6, border: 'none', background: '#22C55E', color: '#fff', fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: downloading ? 'not-allowed' : 'pointer', opacity: downloading === 'excel' ? 0.5 : 1 }}>
+              📊 Excel
+            </button>
+            <button onClick={() => downloadReport('csv')} disabled={!!downloading} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', borderRadius: 6, border: '1px solid #1E2D3D', background: '#1E293B', color: '#fff', fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: downloading ? 'not-allowed' : 'pointer', opacity: downloading === 'csv' ? 0.5 : 1 }}>
+              📋 CSV
+            </button>
+          </div>
         </div>
       </div>
 
@@ -244,7 +273,7 @@ export default function Analytics() {
           <h3 style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
             Top Pelanggar
           </h3>
-          <button onClick={handleExportCsv} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
+          <button onClick={() => downloadReport('csv')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
             <Download size={12} />
             Export CSV
           </button>

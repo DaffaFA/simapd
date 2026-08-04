@@ -110,6 +110,22 @@ __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
     __metadata("design:type", String)
 ], Violation.prototype, "notes", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 20, default: 'pending' }),
+    __metadata("design:type", String)
+], Violation.prototype, "status", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', nullable: true }),
+    __metadata("design:type", Object)
+], Violation.prototype, "rejected_by", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    __metadata("design:type", Object)
+], Violation.prototype, "rejected_at", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', nullable: true }),
+    __metadata("design:type", Object)
+], Violation.prototype, "reject_reason", void 0);
 exports.Violation = Violation = __decorate([
     (0, typeorm_1.Entity)('violations'),
     (0, typeorm_1.Index)(['detected_at']),

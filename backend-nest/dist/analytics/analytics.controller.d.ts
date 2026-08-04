@@ -44,4 +44,5 @@ export declare class AnalyticsController {
     }>;
     exportCsv(q: AnalyticsQueryDto, res: Response): Promise<void>;
     exportPdf(q: AnalyticsQueryDto, res: Response): Promise<void>;
+    exportExcel(q: AnalyticsQueryDto, res: Response): Promise<void>;
 }

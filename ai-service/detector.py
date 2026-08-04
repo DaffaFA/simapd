@@ -28,9 +28,9 @@ class PPEDetector:
 
     # HSV range untuk klasifikasi warna helm
     HELM_HSV = {
-        'Kuning': (np.array([20, 100, 100]), np.array([35, 255, 255])),
-        'Hijau':  (np.array([40,  50,  50]), np.array([80, 255, 255])),
-        'Putih':  (np.array([ 0,   0, 180]), np.array([180, 40, 255])),
+        'Kuning': (np.array([20, 100,  80]), np.array([35, 255, 255])),
+        'Hijau':  (np.array([37,  40,  20]), np.array([100, 255, 255])),
+        'Putih':  (np.array([ 0,   0, 170]), np.array([180,  40, 255])),
     }
 
     def __init__(

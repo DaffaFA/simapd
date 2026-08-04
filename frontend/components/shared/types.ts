@@ -5,6 +5,7 @@ export type APDItem = 'Helm' | 'Rompi' | 'Sepatu';
 
 export interface Violation {
   id: string;
+  violationCode: string;
   trackId: string;
   time: string;
   role: string;

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ScheduleModule } from '@nestjs/schedule';
 import configuration from './config/configuration';
 
 import { RedisModule } from './redis/redis.module';
@@ -11,6 +12,7 @@ import { SpModule } from './sp/sp.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { StreamModule } from './stream/stream.module';
 import { StorageModule } from './storage/storage.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 import { SeedService } from './common/seed.service';
 import { User } from './auth/entities/user.entity';
@@ -37,6 +39,7 @@ import { Personnel } from './personnel/entities/personnel.entity';
       }),
     }),
     TypeOrmModule.forFeature([User, SpConfig, Camera, Personnel]),
+    ScheduleModule.forRoot(),
     RedisModule,
     AuthModule,
     PersonnelModule,
@@ -45,6 +48,7 @@ import { Personnel } from './personnel/entities/personnel.entity';
     AnalyticsModule,
     StreamModule,
     StorageModule,
+    NotificationsModule,
   ],
   providers: [SeedService],
 })

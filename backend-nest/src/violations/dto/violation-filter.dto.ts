@@ -43,4 +43,12 @@ export class ViolationFilterDto {
   @IsOptional()
   @IsUUID('4')
   personnel_id?: string;
+
+  @IsOptional()
+  @IsString()
+  exclude_status?: string;  // e.g. 'rejected'
+
+  @IsOptional()
+  @IsString()
+  status?: string;          // e.g. 'pending', 'confirmed', 'rejected'
 }

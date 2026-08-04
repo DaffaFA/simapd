@@ -7,6 +7,9 @@ export declare class StreamController {
     private gateway;
     constructor(cameraRepo: Repository<Camera>, gateway: StreamGateway);
     getCameras(): Promise<Camera[]>;
+    createCamera(dto: Partial<Camera>): Promise<Camera>;
+    updateCamera(id: string, dto: Partial<Camera>): Promise<Camera>;
+    deleteCamera(id: string): Promise<void>;
     getStatus(): {
         active_connections: number;
         server_time: string;

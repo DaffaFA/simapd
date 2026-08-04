@@ -3,6 +3,7 @@ import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import * as fs from 'fs';
 import * as path from 'path';
+import { pipeline } from 'stream/promises';
 
 import { ViolationsService } from './violations.service';
 import { StorageService } from '../storage/storage.service';
@@ -101,11 +102,19 @@ export class ViolationsController {
     
     // Support legacy (file path) atau RustFS (frame_key)
     if (violation.frame_key) {
+      const stream = await this.storage.streamObject(violation.frame_key)
+      if (!stream) {
+        throw new NotFoundException('Frame tidak ditemukan di storage')
+      }
+
+      res.setHeader('Content-Type', 'image/jpeg')
+      res.setHeader('Cache-Control', 'public, max-age=86400') // cache 24 jam
+      res.setHeader('Content-Disposition', `inline; filename="violation-${id}.jpg"`)
+
       try {
-        const url = await this.storage.getPresignedUrl(violation.frame_key)
-        res.redirect(302, url)
-      } catch (err) {
-        throw new NotFoundException('Gagal memuat frame dari storage')
+        await pipeline(stream as any, res as any)
+      } catch (e: any) {
+        // Ignore pipeline errors on client disconnect
       }
       return
     }
@@ -121,6 +130,29 @@ export class ViolationsController {
     }
 
     throw new NotFoundException('Frame tidak tersedia untuk violation ini')
+  }
+
+  @Post(':id/reject')
+  @Roles('Safety Officer', 'admin')
+  @UseGuards(RolesGuard)
+  async rejectViolation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('reason') reason: string,
+    @CurrentUser() user: User,
+  ) {
+    const v = await this.service.rejectViolation(id, user.username, reason);
+    return this.service.toResponseDto(v);
+  }
+
+  @Post(':id/confirm')
+  @Roles('Safety Officer', 'admin')
+  @UseGuards(RolesGuard)
+  async confirmViolation(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: User,
+  ) {
+    const v = await this.service.confirmViolation(id, user.username);
+    return this.service.toResponseDto(v);
   }
 
   @Delete(':id')

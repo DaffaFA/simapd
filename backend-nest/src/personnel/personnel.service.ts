@@ -59,8 +59,13 @@ export class PersonnelService {
   }
 
   private async toDto(p: Personnel): Promise<PersonnelResponseDto> {
+    try {
+      await this.spService.checkAndAutoIssueSp(p.id, 'System');
+    } catch (e) {
+      console.error(`Auto SP check failed for personnel ${p.id}:`, e);
+    }
     const [vCount, activeSp] = await Promise.all([
-      this.repo.manager.count(Violation, { where: { personnel_id: p.id } }),
+      this.spService.countViolationsForPersonnel(p.id),
       this.spService.getActiveSp(p.id),
     ]);
     return { ...p, violation_count: vCount, active_sp: activeSp?.level ?? null };

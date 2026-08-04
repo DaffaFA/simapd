@@ -8,6 +8,7 @@ export declare class SpService {
     private cfgRepo;
     constructor(spRepo: Repository<SpRecord>, cfgRepo: Repository<SpConfig>);
     getActiveSp(personnelId: string): Promise<SpRecord | null>;
+    countViolationsForPersonnel(personnelId: string): Promise<number>;
     checkAndAutoIssueSp(personnelId: string, issuedBy: string, triggerViolationId?: string): Promise<SpRecord | null>;
     private computeRequiredLevel;
     issueManual(dto: IssueSpDto, issuedBy: string): Promise<SpRecord>;
@@ -17,4 +18,5 @@ export declare class SpService {
     findActiveAll(page: number, pageSize: number): Promise<[SpRecord[], number]>;
     findAll(personnelId?: string): Promise<SpRecord[]>;
     expireOutdated(): Promise<number>;
+    generateLetter(spId: string, issuedByUsername: string): Promise<Buffer>;
 }
