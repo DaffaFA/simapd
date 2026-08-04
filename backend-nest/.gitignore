@@ -1,1 +1,21 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Env files
+.env
+.env.local
+
+# Logs
+*.log
+
+# Test / coverage
+coverage/
+
+# Secrets
+firebase-service-account.json
+
+# OS
+.DS_Store
