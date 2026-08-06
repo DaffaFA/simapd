@@ -27,17 +27,22 @@ let SpService = class SpService {
     }
     async getActiveSp(personnelId) {
         const now = new Date();
-        const records = await this.spRepo.find({ where: { personnel_id: personnelId, is_active: true } });
-        const active = records.filter(r => r.expires_at > now);
+        const records = await this.spRepo.find({
+            where: { personnel_id: personnelId, is_active: true },
+        });
+        const active = records.filter((r) => r.expires_at > now);
         if (!active.length)
             return null;
         const order = { SP3: 3, SP2: 2, SP1: 1 };
         return active.sort((a, b) => order[b.level] - order[a.level])[0];
     }
     async countViolationsForPersonnel(personnelId) {
-        return this.spRepo.manager.createQueryBuilder(violation_entity_1.Violation, 'v')
+        return this.spRepo.manager
+            .createQueryBuilder(violation_entity_1.Violation, 'v')
             .leftJoin('v.links', 'vl')
-            .where('(v.personnel_id = :pid OR vl.personnel_id = :pid)', { pid: personnelId })
+            .where('(v.personnel_id = :pid OR vl.personnel_id = :pid)', {
+            pid: personnelId,
+        })
             .getCount();
     }
     async checkAndAutoIssueSp(personnelId, issuedBy, triggerViolationId) {
@@ -56,12 +61,16 @@ let SpService = class SpService {
             currentSp.is_active = false;
             await this.spRepo.save(currentSp);
         }
-        const durKey = `sp${required.toLowerCase()}_duration_days`;
+        const durKey = `${required.toLowerCase()}_duration_days`;
         const durationDays = config[durKey];
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + durationDays);
-        const personnel = await this.spRepo.manager.findOne(personnel_entity_1.Personnel, { where: { id: personnelId } });
-        const spCount = await this.spRepo.count({ where: { personnel_id: personnelId } });
+        const personnel = await this.spRepo.manager.findOne(personnel_entity_1.Personnel, {
+            where: { id: personnelId },
+        });
+        const spCount = await this.spRepo.count({
+            where: { personnel_id: personnelId },
+        });
         return this.spRepo.save(this.spRepo.create({
             sp_number: `SP-${personnel?.employee_id ?? personnelId.slice(0, 6)}-${String(spCount + 1).padStart(3, '0')}`,
             personnel_id: personnelId,
@@ -138,10 +147,15 @@ let SpService = class SpService {
     }
     async findAll(personnelId) {
         const where = personnelId ? { personnel_id: personnelId } : {};
-        return this.spRepo.find({ where, order: { issued_at: 'DESC' }, relations: { personnel: true } });
+        return this.spRepo.find({
+            where,
+            order: { issued_at: 'DESC' },
+            relations: { personnel: true },
+        });
     }
     async expireOutdated() {
-        const result = await this.spRepo.createQueryBuilder()
+        const result = await this.spRepo
+            .createQueryBuilder()
             .update(sp_record_entity_1.SpRecord)
             .set({ is_active: false })
             .where('is_active = true AND expires_at < NOW()')
@@ -155,14 +169,18 @@ let SpService = class SpService {
         });
         if (!sp)
             throw new common_1.NotFoundException('SP tidak ditemukan');
-        const PDFDocument = (await Promise.resolve().then(() => require('pdfkit'))).default;
+        const PDFDocument = require('pdfkit');
         const doc = new PDFDocument({ margin: 72, size: 'A4' });
         const p = sp.personnel;
         const issuedAt = new Date(sp.issued_at).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'long', year: 'numeric'
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
         });
         const expiresAt = new Date(sp.expires_at).toLocaleDateString('id-ID', {
-            day: 'numeric', month: 'long', year: 'numeric'
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
         });
         return new Promise((resolve, reject) => {
             try {
@@ -171,12 +189,16 @@ let SpService = class SpService {
                 const stream = new PassThrough();
                 doc.pipe(stream);
                 stream.on('data', (chunk) => chunks.push(chunk));
-                doc.font('Helvetica-Bold').fontSize(14)
+                doc
+                    .font('Helvetica-Bold')
+                    .fontSize(14)
                     .text('SURAT PERINGATAN', { align: 'center' });
-                doc.fontSize(16)
-                    .text(sp.level, { align: 'center' });
+                doc.fontSize(16).text(sp.level, { align: 'center' });
                 doc.moveDown(0.5);
-                doc.moveTo(72, doc.y).lineTo(doc.page.width - 72, doc.y).stroke();
+                doc
+                    .moveTo(72, doc.y)
+                    .lineTo(doc.page.width - 72, doc.y)
+                    .stroke();
                 doc.moveDown(0.5);
                 doc.font('Helvetica').fontSize(11);
                 const tableData = [
@@ -188,7 +210,9 @@ let SpService = class SpService {
                     doc.font('Helvetica').text(v);
                 });
                 doc.moveDown();
-                doc.font('Helvetica').fontSize(11)
+                doc
+                    .font('Helvetica')
+                    .fontSize(11)
                     .text('Dengan ini diberitahukan kepada:', { lineGap: 4 });
                 doc.moveDown(0.5);
                 const personnelData = [
@@ -198,18 +222,24 @@ let SpService = class SpService {
                     ['Departemen', p?.department ?? '—'],
                 ];
                 personnelData.forEach(([k, v]) => {
-                    doc.font('Helvetica-Bold')
+                    doc
+                        .font('Helvetica-Bold')
                         .text(`${k.padEnd(12)} :  `, { continued: true });
                     doc.font('Helvetica').text(v);
                 });
                 doc.moveDown();
-                doc.font('Helvetica').fontSize(11).text(`Bahwa berdasarkan hasil monitoring kepatuhan Alat Pelindung Diri (APD) ` +
+                doc
+                    .font('Helvetica')
+                    .fontSize(11)
+                    .text(`Bahwa berdasarkan hasil monitoring kepatuhan Alat Pelindung Diri (APD) ` +
                     `menggunakan sistem SiMAPD, karyawan yang bersangkutan telah tercatat melakukan ` +
                     `pelanggaran penggunaan APD sebanyak ${sp.violation_count_at_issuance} kali ` +
                     `yang melebihi batas toleransi yang ditetapkan.`, { lineGap: 6, align: 'justify' });
                 doc.moveDown();
-                doc.text(`Oleh karena itu, dengan ini diterbitkan ${sp.level} (${sp.level === 'SP1' ? 'Surat Peringatan Pertama'
-                    : sp.level === 'SP2' ? 'Surat Peringatan Kedua'
+                doc.text(`Oleh karena itu, dengan ini diterbitkan ${sp.level} (${sp.level === 'SP1'
+                    ? 'Surat Peringatan Pertama'
+                    : sp.level === 'SP2'
+                        ? 'Surat Peringatan Kedua'
                         : 'Surat Peringatan Ketiga'}) kepada karyawan tersebut. Surat Peringatan ini berlaku ` +
                     `dari ${issuedAt} hingga ${expiresAt}.`, { lineGap: 6, align: 'justify' });
                 doc.moveDown();
@@ -217,15 +247,27 @@ let SpService = class SpService {
                     'dan mematuhi seluruh peraturan keselamatan kerja yang berlaku.', { lineGap: 6, align: 'justify' });
                 doc.moveDown(2);
                 const signX = doc.page.width - 72 - 180;
-                doc.font('Helvetica').fontSize(11)
+                doc
+                    .font('Helvetica')
+                    .fontSize(11)
                     .text(`Hormat kami,`, signX, doc.y, { width: 180, align: 'center' });
                 doc.moveDown(4);
-                doc.moveTo(signX, doc.y).lineTo(signX + 180, doc.y).stroke();
+                doc
+                    .moveTo(signX, doc.y)
+                    .lineTo(signX + 180, doc.y)
+                    .stroke();
                 doc.moveDown(0.3);
-                doc.font('Helvetica-Bold')
-                    .text(issuedByUsername, signX, doc.y, { width: 180, align: 'center' });
-                doc.font('Helvetica').fontSize(10)
-                    .text('Safety Officer', signX, doc.y, { width: 180, align: 'center' });
+                doc.font('Helvetica-Bold').text(issuedByUsername, signX, doc.y, {
+                    width: 180,
+                    align: 'center',
+                });
+                doc
+                    .font('Helvetica')
+                    .fontSize(10)
+                    .text('Safety Officer', signX, doc.y, {
+                    width: 180,
+                    align: 'center',
+                });
                 doc.end();
                 stream.on('end', () => resolve(Buffer.concat(chunks)));
                 stream.on('error', (err) => reject(err));

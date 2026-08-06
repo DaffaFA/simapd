@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
@@ -16,7 +21,8 @@ export class ViolationsService {
 
   constructor(
     @InjectRepository(Violation) private repo: Repository<Violation>,
-    @InjectRepository(ViolationLink) private linkRepo: Repository<ViolationLink>,
+    @InjectRepository(ViolationLink)
+    private linkRepo: Repository<ViolationLink>,
     private spService: SpService,
     private cfg: ConfigService,
   ) {}
@@ -42,7 +48,7 @@ export class ViolationsService {
       date = rawTimestamp ? new Date(rawTimestamp) : new Date();
       if (isNaN(date.getTime())) {
         this.logger.warn(
-          `Invalid timestamp received: "${rawTimestamp}" — fallback ke Date.now()`
+          `Invalid timestamp received: "${rawTimestamp}" — fallback ke Date.now()`,
         );
         date = new Date();
       }
@@ -55,36 +61,46 @@ export class ViolationsService {
     return `VL-${dateStr}-${sequence}`;
   }
 
-  async createFromDetection(dto: CreateViolationInternalDto): Promise<Violation> {
+  async createFromDetection(
+    dto: CreateViolationInternalDto,
+  ): Promise<Violation> {
     let at: Date;
     try {
       at = dto.detected_at ? new Date(dto.detected_at) : new Date();
       if (isNaN(at.getTime())) {
-        this.logger.warn(`Invalid timestamp received: "${dto.detected_at}" — fallback ke Date.now()`);
+        this.logger.warn(
+          `Invalid timestamp received: "${dto.detected_at}" — fallback ke Date.now()`,
+        );
         at = new Date();
       }
     } catch {
       at = new Date();
     }
 
-    return this.repo.save(this.repo.create({
-      ...dto,
-      violation_code: this.generateCode(dto.detected_at as any),
-      detected_at: at,
-      shift: ViolationsService.computeShift(at),
-    }));
+    return this.repo.save(
+      this.repo.create({
+        ...dto,
+        violation_code: this.generateCode(dto.detected_at as any),
+        detected_at: at,
+        shift: ViolationsService.computeShift(at),
+      }),
+    );
   }
 
   async findAll(filter: ViolationFilterDto): Promise<[Violation[], number]> {
-    const qb = this.repo.createQueryBuilder('v')
+    const qb = this.repo
+      .createQueryBuilder('v')
       .leftJoinAndSelect('v.personnel', 'p')
       .leftJoinAndSelect('v.links', 'links')
       .leftJoinAndSelect('links.personnel', 'linkPersonnel');
 
-    if (filter.date_from) qb.andWhere('v.detected_at >= :df', { df: new Date(filter.date_from) });
-    if (filter.date_to) qb.andWhere('v.detected_at <= :dt', { dt: new Date(filter.date_to) });
+    if (filter.date_from)
+      qb.andWhere('v.detected_at >= :df', { df: new Date(filter.date_from) });
+    if (filter.date_to)
+      qb.andWhere('v.detected_at <= :dt', { dt: new Date(filter.date_to) });
     if (filter.shift) qb.andWhere('v.shift = :sh', { sh: filter.shift });
-    if (filter.camera_id) qb.andWhere('v.camera_id = :cam', { cam: filter.camera_id });
+    if (filter.camera_id)
+      qb.andWhere('v.camera_id = :cam', { cam: filter.camera_id });
     if (filter.missing_ppe === 'helm') qb.andWhere('v.missing_helm = true');
     if (filter.missing_ppe === 'vest') qb.andWhere('v.missing_vest = true');
     if (filter.missing_ppe === 'sepatu') qb.andWhere('v.missing_shoes = true');
@@ -100,22 +116,25 @@ export class ViolationsService {
     }
 
     if (filter.personnel_id) {
-      qb.innerJoin('v.links', 'filterLink', 'filterLink.personnel_id = :pid', { pid: filter.personnel_id });
+      qb.innerJoin('v.links', 'filterLink', 'filterLink.personnel_id = :pid', {
+        pid: filter.personnel_id,
+      });
     }
 
     const p = filter.page ?? 1;
     const ps = filter.page_size ?? 20;
 
-    return qb.orderBy('v.detected_at', 'DESC')
+    return qb
+      .orderBy('v.detected_at', 'DESC')
       .skip((p - 1) * ps)
       .take(ps)
       .getManyAndCount();
   }
 
   async findOne(id: string): Promise<Violation> {
-    const v = await this.repo.findOne({ 
-      where: { id }, 
-      relations: { links: { personnel: true } }
+    const v = await this.repo.findOne({
+      where: { id },
+      relations: { links: { personnel: true } },
     });
     if (!v) throw new NotFoundException();
     return v;
@@ -129,11 +148,11 @@ export class ViolationsService {
     const violation = await this.findOne(violationId);
     if (!violation) throw new NotFoundException('Violation tidak ditemukan');
 
+    const patch: Partial<Violation> = {};
     if (!violation.personnel_id && dto.personnel_ids.length > 0) {
-      violation.personnel_id = dto.personnel_ids[0];
-      violation.linked_by = linkedBy;
-      violation.linked_at = new Date();
-      await this.repo.save(violation);
+      patch.personnel_id = dto.personnel_ids[0];
+      patch.linked_by = linkedBy;
+      patch.linked_at = new Date();
     }
 
     const createdLinks: ViolationLink[] = [];
@@ -142,7 +161,7 @@ export class ViolationsService {
     for (const personnelId of dto.personnel_ids) {
       // Cek apakah link sudah ada
       const existing = await this.linkRepo.findOne({
-        where: { violation_id: violationId, personnel_id: personnelId }
+        where: { violation_id: violationId, personnel_id: personnelId },
       });
       if (existing) {
         errors.push(`Personnel ${personnelId} sudah di-link ke violation ini`);
@@ -159,7 +178,11 @@ export class ViolationsService {
 
       // Trigger SP check untuk setiap personnel yang di-link
       try {
-        await this.spService.checkAndAutoIssueSp(personnelId, linkedBy, violationId);
+        await this.spService.checkAndAutoIssueSp(
+          personnelId,
+          linkedBy,
+          violationId,
+        );
       } catch (e) {
         console.error(`SP check failed untuk personnel ${personnelId}:`, e);
       }
@@ -167,6 +190,20 @@ export class ViolationsService {
 
     if (errors.length > 0 && createdLinks.length === 0) {
       throw new ConflictException(errors.join('; '));
+    }
+
+    // Auto-acknowledge: linking to a personnel means a human has reviewed
+    // and attributed this violation, so it no longer needs manual confirm.
+    if (createdLinks.length > 0 && violation.status === 'pending') {
+      patch.status = 'confirmed';
+    }
+
+    // Targeted UPDATE (not repo.save(violation)) — save() would cascade
+    // into the `links` relation loaded by findOne() above, which is stale
+    // by this point (doesn't include the links just created in the loop)
+    // and nulls out violation_id on the just-inserted violation_links row.
+    if (Object.keys(patch).length > 0) {
+      await this.repo.update(violationId, patch);
     }
 
     return createdLinks;
@@ -177,16 +214,22 @@ export class ViolationsService {
     personnelId: string,
   ): Promise<void> {
     const link = await this.linkRepo.findOne({
-      where: { violation_id: violationId, personnel_id: personnelId }
+      where: { violation_id: violationId, personnel_id: personnelId },
     });
     if (!link) throw new NotFoundException('Link tidak ditemukan');
     await this.linkRepo.remove(link);
 
     const violation = await this.findOne(violationId);
     if (violation && violation.personnel_id === personnelId) {
-      const remainingLinks = await this.linkRepo.find({ where: { violation_id: violationId } });
-      (violation as any).personnel_id = remainingLinks.length > 0 ? remainingLinks[0].personnel_id : null;
-      await this.repo.save(violation);
+      const remainingLinks = await this.linkRepo.find({
+        where: { violation_id: violationId },
+      });
+      // Targeted UPDATE, not repo.save(violation) — avoids cascading into
+      // the `links` relation (see linkToPersonnel for why that's unsafe).
+      await this.repo.update(violationId, {
+        personnel_id:
+          remainingLinks.length > 0 ? remainingLinks[0].personnel_id : null,
+      });
     }
   }
 
@@ -204,17 +247,17 @@ export class ViolationsService {
   }
 
   async rejectViolation(
-    id:         string,
+    id: string,
     rejectedBy: string,
-    reason?:    string,
+    reason?: string,
   ): Promise<Violation> {
     const v = await this.repo.findOne({ where: { id } });
     if (!v) throw new NotFoundException('Violation tidak ditemukan');
     if (v.status === 'rejected') throw new ConflictException('Sudah di-reject');
 
-    v.status        = 'rejected';
-    v.rejected_by   = rejectedBy;
-    v.rejected_at   = new Date();
+    v.status = 'rejected';
+    v.rejected_by = rejectedBy;
+    v.rejected_at = new Date();
     v.reject_reason = reason ?? null;
     return this.repo.save(v);
   }
@@ -222,7 +265,8 @@ export class ViolationsService {
   async confirmViolation(id: string, confirmedBy: string): Promise<Violation> {
     const v = await this.repo.findOne({ where: { id } });
     if (!v) throw new NotFoundException('Violation tidak ditemukan');
-    if (v.status === 'rejected') throw new ConflictException('Violation sudah di-reject');
+    if (v.status === 'rejected')
+      throw new ConflictException('Violation sudah di-reject');
 
     v.status = 'confirmed';
     return this.repo.save(v);
@@ -230,15 +274,15 @@ export class ViolationsService {
 
   async autoRejectExpired(): Promise<number> {
     const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 2);  // 2 hari yang lalu
+    cutoff.setDate(cutoff.getDate() - 2); // 2 hari yang lalu
 
     const result = await this.repo
       .createQueryBuilder()
       .update(Violation)
       .set({
-        status:        'rejected',
-        rejected_by:   'system',
-        rejected_at:   new Date(),
+        status: 'rejected',
+        rejected_by: 'system',
+        rejected_at: new Date(),
         reject_reason: 'Auto-reject: tidak dikonfirmasi dalam 2 hari',
       })
       .where('status = :status', { status: 'pending' })
@@ -253,7 +297,8 @@ export class ViolationsService {
     const frameKey = v.frame_key ?? null;
     let frameUrl: string | null = null;
     if (frameKey) {
-      const endpoint = this.cfg?.get('RUSTFS_ENDPOINT') ?? 'http://localhost:9000';
+      const endpoint =
+        this.cfg?.get('RUSTFS_ENDPOINT') ?? 'http://localhost:9000';
       const bucket = this.cfg?.get('RUSTFS_BUCKET') ?? 'simapd-frames';
       frameUrl = `${endpoint}/${bucket}/${frameKey}`;
     }
@@ -283,9 +328,11 @@ export class ViolationsService {
       rejected_by: v.rejected_by ?? null,
       rejected_at: v.rejected_at ?? null,
       reject_reason: v.reject_reason ?? null,
-      links: (v.links ?? []).map(l => ({
+      links: (v.links ?? []).map((l) => ({
         personnel_id: l.personnel_id,
-        personnel: l.personnel ? { full_name: l.personnel.full_name } : undefined,
+        personnel: l.personnel
+          ? { full_name: l.personnel.full_name }
+          : undefined,
       })),
     };
   }

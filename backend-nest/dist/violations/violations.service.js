@@ -80,7 +80,8 @@ let ViolationsService = ViolationsService_1 = class ViolationsService {
         }));
     }
     async findAll(filter) {
-        const qb = this.repo.createQueryBuilder('v')
+        const qb = this.repo
+            .createQueryBuilder('v')
             .leftJoinAndSelect('v.personnel', 'p')
             .leftJoinAndSelect('v.links', 'links')
             .leftJoinAndSelect('links.personnel', 'linkPersonnel');
@@ -109,11 +110,14 @@ let ViolationsService = ViolationsService_1 = class ViolationsService {
             qb.andWhere('v.status = :status', { status: filter.status });
         }
         if (filter.personnel_id) {
-            qb.innerJoin('v.links', 'filterLink', 'filterLink.personnel_id = :pid', { pid: filter.personnel_id });
+            qb.innerJoin('v.links', 'filterLink', 'filterLink.personnel_id = :pid', {
+                pid: filter.personnel_id,
+            });
         }
         const p = filter.page ?? 1;
         const ps = filter.page_size ?? 20;
-        return qb.orderBy('v.detected_at', 'DESC')
+        return qb
+            .orderBy('v.detected_at', 'DESC')
             .skip((p - 1) * ps)
             .take(ps)
             .getManyAndCount();
@@ -121,7 +125,7 @@ let ViolationsService = ViolationsService_1 = class ViolationsService {
     async findOne(id) {
         const v = await this.repo.findOne({
             where: { id },
-            relations: { links: { personnel: true } }
+            relations: { links: { personnel: true } },
         });
         if (!v)
             throw new common_1.NotFoundException();
@@ -131,17 +135,17 @@ let ViolationsService = ViolationsService_1 = class ViolationsService {
         const violation = await this.findOne(violationId);
         if (!violation)
             throw new common_1.NotFoundException('Violation tidak ditemukan');
+        const patch = {};
         if (!violation.personnel_id && dto.personnel_ids.length > 0) {
-            violation.personnel_id = dto.personnel_ids[0];
-            violation.linked_by = linkedBy;
-            violation.linked_at = new Date();
-            await this.repo.save(violation);
+            patch.personnel_id = dto.personnel_ids[0];
+            patch.linked_by = linkedBy;
+            patch.linked_at = new Date();
         }
         const createdLinks = [];
         const errors = [];
         for (const personnelId of dto.personnel_ids) {
             const existing = await this.linkRepo.findOne({
-                where: { violation_id: violationId, personnel_id: personnelId }
+                where: { violation_id: violationId, personnel_id: personnelId },
             });
             if (existing) {
                 errors.push(`Personnel ${personnelId} sudah di-link ke violation ini`);
@@ -164,20 +168,29 @@ let ViolationsService = ViolationsService_1 = class ViolationsService {
         if (errors.length > 0 && createdLinks.length === 0) {
             throw new common_1.ConflictException(errors.join('; '));
         }
+        if (createdLinks.length > 0 && violation.status === 'pending') {
+            patch.status = 'confirmed';
+        }
+        if (Object.keys(patch).length > 0) {
+            await this.repo.update(violationId, patch);
+        }
         return createdLinks;
     }
     async unlinkFromPersonnel(violationId, personnelId) {
         const link = await this.linkRepo.findOne({
-            where: { violation_id: violationId, personnel_id: personnelId }
+            where: { violation_id: violationId, personnel_id: personnelId },
         });
         if (!link)
             throw new common_1.NotFoundException('Link tidak ditemukan');
         await this.linkRepo.remove(link);
         const violation = await this.findOne(violationId);
         if (violation && violation.personnel_id === personnelId) {
-            const remainingLinks = await this.linkRepo.find({ where: { violation_id: violationId } });
-            violation.personnel_id = remainingLinks.length > 0 ? remainingLinks[0].personnel_id : null;
-            await this.repo.save(violation);
+            const remainingLinks = await this.linkRepo.find({
+                where: { violation_id: violationId },
+            });
+            await this.repo.update(violationId, {
+                personnel_id: remainingLinks.length > 0 ? remainingLinks[0].personnel_id : null,
+            });
         }
     }
     async getLinksForViolation(violationId) {
@@ -261,9 +274,11 @@ let ViolationsService = ViolationsService_1 = class ViolationsService {
             rejected_by: v.rejected_by ?? null,
             rejected_at: v.rejected_at ?? null,
             reject_reason: v.reject_reason ?? null,
-            links: (v.links ?? []).map(l => ({
+            links: (v.links ?? []).map((l) => ({
                 personnel_id: l.personnel_id,
-                personnel: l.personnel ? { full_name: l.personnel.full_name } : undefined,
+                personnel: l.personnel
+                    ? { full_name: l.personnel.full_name }
+                    : undefined,
             })),
         };
     }

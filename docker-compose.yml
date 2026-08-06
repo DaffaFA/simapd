@@ -151,8 +151,14 @@ services:
       # - VIDEO_DIR=/app/videos
       # - DEMO_LOOP=true
 
-      # Opsi D: CCTV simulator (video di-loop via camsim → mediamtx sebagai RTSP)
-      - CAMERAS=[{"id":"CAM-01","rtsp_url":"rtsp://mediamtx:8554/cam1"},{"id":"CAM-02","rtsp_url":"rtsp://mediamtx:8554/cam2"},{"id":"CAM-03","rtsp_url":"rtsp://mediamtx:8554/cam3"}]
+      # Opsi D: CCTV simulator (camsim menggabungkan semua video jadi SATU
+      # grid RTSP stream di path /combined — inferensi cuma jalan sekali,
+      # bukan sekali per kamera. Lebih ringan untuk laptop.)
+      # DEMO_MODE=false override WAJIB di sini — ai-service/.env (dipakai juga
+      # untuk run lokal non-docker) set DEMO_MODE=true, dan env_file cuma
+      # ke-override oleh key yang eksplisit ada di environment: ini.
+      - DEMO_MODE=false
+      - CAMERAS=[{"id":"CAM-01","rtsp_url":"rtsp://mediamtx:8554/combined"}]
 
       - RUSTFS_ENDPOINT=http://rustfs:9000
       - RUSTFS_ACCESS_KEY=QRSSaQVq8Rue4AnjHXJT
