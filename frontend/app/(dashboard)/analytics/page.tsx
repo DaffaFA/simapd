@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer } from 'recharts';
-import { FileDown, Printer, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { HelmDot } from '@/components/shared/HelmDot';
 import { analyticsApi } from '@/src/lib/api';
 
@@ -68,17 +68,10 @@ export default function Analytics() {
   const downloadReport = async (format: 'pdf' | 'excel' | 'csv') => {
     setDownloading(format);
     try {
-      const token = localStorage.getItem('access_token') ?? '';
-      const ext   = format === 'excel' ? 'xlsx' : format;
-      const url   = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/analytics/export/${format}?from=${dateFrom}&to=${dateTo}`;
-      const res   = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) throw new Error('Export gagal');
-      const blob  = await res.blob();
-      const a     = document.createElement('a');
-      a.href      = URL.createObjectURL(blob);
-      a.download  = `laporan_apd_${dateFrom}_${dateTo}.${ext}`;
-      a.click();
-      URL.revokeObjectURL(a.href);
+      const params = { date_from: dateFrom, date_to: dateTo };
+      if (format === 'pdf')        await analyticsApi.exportPdf(params);
+      else if (format === 'excel') await analyticsApi.exportExcel(params);
+      else                         await analyticsApi.exportCsv(params);
     } catch (e) {
       alert('Export gagal. Coba lagi.');
     } finally {
@@ -89,8 +82,10 @@ export default function Analytics() {
   useEffect(() => {
     async function load() {
       try {
-        const daysMap: Record<string, number> = { '7 Hari': 7, '1 Bulan': 30, '3 Bulan': 90, 'Kustom': 7 };
-        const res = await analyticsApi.dashboard({ days: String(daysMap[period] ?? 7) });
+        const daysMap: Record<string, number> = { '7 Hari': 7, '1 Bulan': 30, '3 Bulan': 90 };
+        const days = daysMap[period]
+          ?? Math.max(1, Math.round((new Date(dateTo).getTime() - new Date(dateFrom).getTime()) / 86400000) + 1);
+        const res = await analyticsApi.dashboard({ days: String(days), date_from: dateFrom, date_to: dateTo });
         setData(res);
       } catch (err) {
         console.error('Analytics load failed:', err);
@@ -100,7 +95,7 @@ export default function Analytics() {
     }
     setLoading(true);
     load();
-  }, [period]);
+  }, [period, dateFrom, dateTo]);
 
   const trend = data?.trend ?? [];
   const chartData = trend.map(t => ({
@@ -149,7 +144,18 @@ export default function Analytics() {
           {periods.map(p => (
             <button
               key={p}
-              onClick={() => setPeriod(p)}
+              onClick={() => {
+                setPeriod(p);
+                const daysMap: Record<string, number> = { '7 Hari': 7, '1 Bulan': 30, '3 Bulan': 90 };
+                const days = daysMap[p];
+                if (days) {
+                  const to = new Date();
+                  const from = new Date();
+                  from.setDate(to.getDate() - (days - 1));
+                  setDateTo(to.toISOString().slice(0, 10));
+                  setDateFrom(from.toISOString().slice(0, 10));
+                }
+              }}
               style={{
                 padding: '6px 14px',
                 borderRadius: 6,
@@ -170,10 +176,10 @@ export default function Analytics() {
 
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+            <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPeriod('Kustom'); }}
               style={{ background: '#111827', border: '1px solid #1E2D3D', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontFamily: 'DM Sans, sans-serif', colorScheme: 'dark' }} />
             <span style={{ color: '#64748B', fontSize: 12 }}>s/d</span>
-            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+            <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPeriod('Kustom'); }}
               style={{ background: '#111827', border: '1px solid #1E2D3D', color: '#E2E8F0', padding: '6px 10px', borderRadius: 6, fontSize: 12, fontFamily: 'DM Sans, sans-serif', colorScheme: 'dark' }} />
           </div>
           <div style={{ display: 'flex', gap: 6 }}>

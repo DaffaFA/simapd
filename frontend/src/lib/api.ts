@@ -99,6 +99,14 @@ export const analyticsApi = {
     })
     a.click(); URL.revokeObjectURL(a.href)
   },
+  exportExcel: async (p?: Record<string, any>) => {
+    const blob = await apiDownload(`/analytics/export/excel?${new URLSearchParams(p??{})}`)
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `laporan_apd_${new Date().toISOString().slice(0,10)}.xlsx`,
+    })
+    a.click(); URL.revokeObjectURL(a.href)
+  },
 }
 
 export function getViolationFrameUrl(violationId: string): string {
