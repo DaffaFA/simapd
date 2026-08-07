@@ -120,7 +120,7 @@ exports.SpController = SpController = __decorate([
     (0, swagger_1.ApiTags)('SP Management'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, roles_decorator_1.Roles)('safety_officer', 'admin'),
     (0, common_1.Controller)('sp'),
     __metadata("design:paramtypes", [sp_service_1.SpService])
 ], SpController);

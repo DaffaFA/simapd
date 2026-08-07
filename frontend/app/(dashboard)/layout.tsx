@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/src/lib/AuthContext';
+import { EDITOR_ROLES, hasRole } from '@/src/lib/roles';
 
 const pageTitles: Record<string, { title: string; subtitle: string }> = {
   '/': { title: 'Dashboard Pemantauan Real-Time', subtitle: 'Pemantauan APD langsung dari kamera CCTV aktif' },
@@ -23,8 +24,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const meta = pageTitles[pathname] ?? { title: 'SiMAPD', subtitle: '' };
 
   useEffect(() => {
-    if (!isLoading && !user) router.replace('/login');
-  }, [isLoading, user, router]);
+    if (isLoading) return;
+    if (!user) {
+      router.replace('/login');
+      return;
+    }
+    // Pengaturan mengubah konfigurasi SP & kamera — dibatasi ke role yang sama seperti @Roles() di backend
+    if (pathname.startsWith('/settings') && !hasRole(user.role, EDITOR_ROLES)) {
+      router.replace('/');
+    }
+  }, [isLoading, user, pathname, router]);
 
   if (isLoading) {
     return (
@@ -39,6 +48,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   if (!user) return null;
+  if (pathname.startsWith('/settings') && !hasRole(user.role, EDITOR_ROLES)) return null;
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#080C10' }}>

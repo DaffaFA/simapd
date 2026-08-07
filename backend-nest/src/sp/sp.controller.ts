@@ -14,7 +14,7 @@ import { PaginatedResponseDto } from '../common/dto/paginated-response.dto';
 @ApiTags('SP Management')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('Safety Officer', 'admin')
+@Roles('safety_officer', 'admin')
 @Controller('sp')
 export class SpController {
   constructor(private readonly spService: SpService) {}
@@ -61,7 +61,7 @@ export class SpController {
 
   @Get(':id/letter')
   @Roles() // Allowed for safety officer and admin, or just authenticated user? 
-  // Let's use @Roles() to allow authenticated user, or match others. The class has Roles('Safety Officer', 'admin').
+  // Let's use @Roles() to allow authenticated user, or match others. The class has Roles('safety_officer', 'admin').
   async downloadSpLetter(
     @Param('id') id: string,
     @CurrentUser() user: User,

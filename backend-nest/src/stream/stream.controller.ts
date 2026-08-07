@@ -26,7 +26,7 @@ export class StreamController {
 
   @Post('cameras')
   @UseGuards(RolesGuard)
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @HttpCode(201)
   async createCamera(@Body() dto: Partial<Camera>): Promise<Camera> {
     return this.cameraRepo.save(this.cameraRepo.create(dto));
@@ -34,7 +34,7 @@ export class StreamController {
 
   @Patch('cameras/:id')
   @UseGuards(RolesGuard)
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   async updateCamera(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: Partial<Camera>,

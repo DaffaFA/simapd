@@ -61,7 +61,7 @@ __decorate([
 ], PersonnelController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Post)(),
-    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, roles_decorator_1.Roles)('safety_officer', 'admin'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.HttpCode)(201),
     __param(0, (0, common_1.Body)()),
@@ -71,7 +71,7 @@ __decorate([
 ], PersonnelController.prototype, "create", null);
 __decorate([
     (0, common_1.Put)(':id'),
-    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, roles_decorator_1.Roles)('safety_officer', 'admin'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Body)()),
@@ -81,7 +81,7 @@ __decorate([
 ], PersonnelController.prototype, "update", null);
 __decorate([
     (0, common_1.Delete)(':id'),
-    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, roles_decorator_1.Roles)('safety_officer', 'admin'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
     (0, common_1.HttpCode)(204),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),

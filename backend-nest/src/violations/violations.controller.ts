@@ -42,7 +42,7 @@ export class ViolationsController {
   }
 
   @Post(':id/link')
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   async linkToPersonnel(
     @Param('id', ParseUUIDPipe) id: string,
@@ -81,7 +81,7 @@ export class ViolationsController {
   }
 
   @Delete(':id/link/:personnelId')
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   async unlinkFromPersonnel(
     @Param('id', ParseUUIDPipe) id: string,
@@ -133,7 +133,7 @@ export class ViolationsController {
   }
 
   @Post(':id/reject')
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   async rejectViolation(
     @Param('id', ParseUUIDPipe) id: string,
@@ -145,7 +145,7 @@ export class ViolationsController {
   }
 
   @Post(':id/confirm')
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   async confirmViolation(
     @Param('id', ParseUUIDPipe) id: string,
@@ -156,7 +156,7 @@ export class ViolationsController {
   }
 
   @Delete(':id')
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   @HttpCode(204)
   async remove(@Param('id', ParseUUIDPipe) id: string) {

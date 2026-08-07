@@ -3,17 +3,26 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, AlertTriangle, Users, BarChart2, Shield, Settings } from 'lucide-react';
+import { useAuth } from '@/src/lib/AuthContext';
+import { ROLE_LABELS, EDITOR_ROLES, hasRole } from '@/src/lib/roles';
+import type { Role } from '@/src/types/simapd';
 
-const navItems = [
+const navItems: { to: string; label: string; icon: typeof LayoutDashboard; roles?: Role[] }[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/violations', label: 'Pelanggaran', icon: AlertTriangle },
   { to: '/personnel', label: 'Personel & SP', icon: Users },
   { to: '/analytics', label: 'Analitik', icon: BarChart2 },
-  { to: '/settings', label: 'Pengaturan', icon: Settings },
+  // Pengaturan mengubah konfigurasi SP & kamera — dibatasi sama seperti @Roles() di backend
+  { to: '/settings', label: 'Pengaturan', icon: Settings, roles: EDITOR_ROLES },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useAuth();
+  const visibleItems = navItems.filter((item) => !item.roles || hasRole(user?.role, item.roles));
+  const initials = user?.full_name
+    ? user.full_name.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join('')
+    : '?';
 
   return (
     <aside
@@ -62,7 +71,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {navItems.map(({ to, label, icon: Icon }) => {
+        {visibleItems.map(({ to, label, icon: Icon }) => {
           const isActive = to === '/' ? pathname === '/' : pathname.startsWith(to);
           return (
             <Link
@@ -118,11 +127,11 @@ export function Sidebar() {
             flexShrink: 0,
           }}
         >
-          SO
+          {initials}
         </div>
         <div>
-          <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0' }}>Safety Officer</div>
-          <div style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>Shift Pagi</div>
+          <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0' }}>{user?.full_name ?? '—'}</div>
+          <div style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>{user ? ROLE_LABELS[user.role] : ''}</div>
         </div>
       </div>
     </aside>

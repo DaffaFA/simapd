@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { apiFetch } from '@/src/lib/api'
+import { useAuth } from '@/src/lib/AuthContext'
+import { hasRole } from '@/src/lib/roles'
 import { Loader2 } from 'lucide-react'
 
 interface Camera {
@@ -20,6 +22,8 @@ const EMPTY_FORM: CameraForm = {
 }
 
 export default function CamerasPage() {
+  const { user } = useAuth()
+  const canDelete = hasRole(user?.role, ['admin'])
   const [cameras, setCameras] = useState<Camera[]>([])
   const [loading, setLoading] = useState(true)
   const [form,    setForm]    = useState<CameraForm>(EMPTY_FORM)
@@ -145,10 +149,12 @@ export default function CamerasPage() {
                         style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', color: '#3B82F6', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
                         Edit
                       </button>
-                      <button onClick={() => handleDelete(cam.id)}
-                        style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
-                        Hapus
-                      </button>
+                      {canDelete && (
+                        <button onClick={() => handleDelete(cam.id)}
+                          style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
+                          Hapus
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

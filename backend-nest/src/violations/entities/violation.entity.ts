@@ -1,4 +1,11 @@
-import { Entity, Column, Index, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  Index,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from '../../common/entities/base.entity';
 import { Personnel } from '../../personnel/entities/personnel.entity';
 import { ViolationLink } from './violation-link.entity';
@@ -23,7 +30,11 @@ export class Violation extends BaseEntity {
   @Column({ type: 'enum', enum: ['Pagi', 'Siang', 'Malam'] })
   shift: string;
 
-  @Column({ type: 'enum', enum: ['Kuning', 'Putih', 'Hijau', 'Unknown'], default: 'Unknown' })
+  @Column({
+    type: 'enum',
+    enum: ['Kuning', 'Putih', 'Hijau', 'Unknown'],
+    default: 'Unknown',
+  })
   helm_color_detected: string;
 
   @Column({ default: '' })
@@ -59,15 +70,20 @@ export class Violation extends BaseEntity {
   @Column({ nullable: true })
   frame_key: string;
 
-  @ManyToOne(() => Personnel, (p: Personnel) => p.violations, { nullable: true })
+  @ManyToOne(() => Personnel, (p: Personnel) => p.violations, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'personnel_id' })
   personnel: Personnel;
 
-  @OneToMany(() => ViolationLink, (l) => l.violation, { cascade: true, eager: false })
+  @OneToMany(() => ViolationLink, (l) => l.violation, {
+    cascade: true,
+    eager: false,
+  })
   links: ViolationLink[];
 
   @Column({ nullable: true })
-  personnel_id: string;
+  personnel_id: string | null;
 
   @Column({ nullable: true })
   linked_by: string;

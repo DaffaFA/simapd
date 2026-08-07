@@ -21,7 +21,7 @@ export declare class Violation extends BaseEntity {
     frame_key: string;
     personnel: Personnel;
     links: ViolationLink[];
-    personnel_id: string;
+    personnel_id: string | null;
     linked_by: string;
     linked_at: Date;
     notes: string;

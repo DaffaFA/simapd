@@ -38,7 +38,11 @@ __decorate([
     __metadata("design:type", String)
 ], Violation.prototype, "shift", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: ['Kuning', 'Putih', 'Hijau', 'Unknown'], default: 'Unknown' }),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: ['Kuning', 'Putih', 'Hijau', 'Unknown'],
+        default: 'Unknown',
+    }),
     __metadata("design:type", String)
 ], Violation.prototype, "helm_color_detected", void 0);
 __decorate([
@@ -86,17 +90,22 @@ __decorate([
     __metadata("design:type", String)
 ], Violation.prototype, "frame_key", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => personnel_entity_1.Personnel, (p) => p.violations, { nullable: true }),
+    (0, typeorm_1.ManyToOne)(() => personnel_entity_1.Personnel, (p) => p.violations, {
+        nullable: true,
+    }),
     (0, typeorm_1.JoinColumn)({ name: 'personnel_id' }),
     __metadata("design:type", personnel_entity_1.Personnel)
 ], Violation.prototype, "personnel", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => violation_link_entity_1.ViolationLink, (l) => l.violation, { cascade: true, eager: false }),
+    (0, typeorm_1.OneToMany)(() => violation_link_entity_1.ViolationLink, (l) => l.violation, {
+        cascade: true,
+        eager: false,
+    }),
     __metadata("design:type", Array)
 ], Violation.prototype, "links", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], Violation.prototype, "personnel_id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ nullable: true }),

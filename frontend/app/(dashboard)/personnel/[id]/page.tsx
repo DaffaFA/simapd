@@ -2,15 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-// Mock AuthContext for now, wait, does @/context/AuthContext exist? Let's check imports
 import { getPersonnel, updatePersonnel, getViolationsByPersonnel, getSPRecordsByPersonnel, getViolationFrameUrl, spApi } from '@/src/lib/api'
 import type { Personnel, Violation, SpRecord, UpdatePersonnelDto } from '@/src/types/simapd'
-
-// Let's create a stub useAuth if we don't know where it is, or we'll just check later.
-// For now I'll assume we can fake user for edit permissions if useAuth is missing or I'll just check if it exists.
-// The user provided `@/context/AuthContext` but the existing codebase might have auth in `lib` or no auth context.
-// Let's check where Auth is. I'll import it as requested for now.
 import { useAuth } from '@/src/lib/AuthContext'
+import { EDITOR_ROLES, hasRole } from '@/src/lib/roles'
 import { ViolationFrame } from '@/components/violations/ViolationFrame'
 
 // ─── Komponen utama ─────────────────────────────────────────────────────────
@@ -37,7 +32,7 @@ export default function PersonnelDetailPage() {
   const [issuingSp, setIssuingSp]     = useState(false)
   const [issueSpError, setIssueSpError] = useState<string | null>(null)
 
-  const canEdit = !user || user?.role === 'Safety Officer' || user?.role === 'admin' || user?.role === 'Supervisor'
+  const canEdit = hasRole(user?.role, EDITOR_ROLES)
 
   const handleIssueSp = async () => {
     if (!personnel) return

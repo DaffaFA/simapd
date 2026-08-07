@@ -92,7 +92,7 @@ __decorate([
 __decorate([
     (0, common_1.Post)('cameras'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, roles_decorator_1.Roles)('safety_officer', 'admin'),
     (0, common_1.HttpCode)(201),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -102,7 +102,7 @@ __decorate([
 __decorate([
     (0, common_1.Patch)('cameras/:id'),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)('Safety Officer', 'admin'),
+    (0, roles_decorator_1.Roles)('safety_officer', 'admin'),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),

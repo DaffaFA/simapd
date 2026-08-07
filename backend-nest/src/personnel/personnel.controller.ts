@@ -29,7 +29,7 @@ export class PersonnelController {
   }
 
   @Post()
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   @HttpCode(201)
   async create(@Body() dto: CreatePersonnelDto) {
@@ -37,14 +37,14 @@ export class PersonnelController {
   }
 
   @Put(':id')
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdatePersonnelDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  @Roles('Safety Officer', 'admin')
+  @Roles('safety_officer', 'admin')
   @UseGuards(RolesGuard)
   @HttpCode(204)
   async remove(@Param('id', ParseUUIDPipe) id: string) {

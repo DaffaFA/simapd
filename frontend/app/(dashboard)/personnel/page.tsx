@@ -10,8 +10,12 @@ import { MiniProgressBar } from '@/components/shared/MiniProgressBar';
 import { personnelApi } from '@/src/lib/api';
 import { mapPersonnel } from '@/src/lib/mappers';
 import type { Personnel } from '@/components/shared/types';
+import { useAuth } from '@/src/lib/AuthContext';
+import { EDITOR_ROLES, hasRole } from '@/src/lib/roles';
 
 export default function PersonnelPage() {
+  const { user } = useAuth();
+  const canEdit = hasRole(user?.role, EDITOR_ROLES);
   const [search, setSearch] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingPersonnel, setEditingPersonnel] = useState<Personnel | null>(null);
@@ -54,13 +58,15 @@ export default function PersonnelPage() {
             style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', width: '100%' }}
           />
         </div>
-        <button
-          onClick={() => { setEditingPersonnel(null); setShowModal(true); }}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#F97316', color: '#fff', fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}
-        >
-          <Plus size={15} />
-          Tambah Personel
-        </button>
+        {canEdit && (
+          <button
+            onClick={() => { setEditingPersonnel(null); setShowModal(true); }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, border: 'none', background: '#F97316', color: '#fff', fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, cursor: 'pointer', marginLeft: 'auto' }}
+          >
+            <Plus size={15} />
+            Tambah Personel
+          </button>
+        )}
       </div>
 
       {/* Table */}
@@ -90,7 +96,7 @@ export default function PersonnelPage() {
               </tr>
             ) : (
               filtered.map(p => (
-                <PersonnelRow key={p.id} p={p} onEdit={() => { setEditingPersonnel(p); setShowModal(true); }} />
+                <PersonnelRow key={p.id} p={p} canEdit={canEdit} onEdit={() => { setEditingPersonnel(p); setShowModal(true); }} />
               ))
             )}
           </tbody>
@@ -120,7 +126,7 @@ export default function PersonnelPage() {
   );
 }
 
-function PersonnelRow({ p, onEdit }: { p: Personnel; onEdit: () => void }) {
+function PersonnelRow({ p, canEdit, onEdit }: { p: Personnel; canEdit: boolean; onEdit: () => void }) {
   const router = useRouter();
   return (
     <tr
@@ -163,10 +169,12 @@ function PersonnelRow({ p, onEdit }: { p: Personnel; onEdit: () => void }) {
             <Eye size={11} />
             Detail
           </button>
-          <button onClick={onEdit} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(249,115,22,0.25)', background: 'rgba(249,115,22,0.08)', color: '#F97316', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
-            <Edit2 size={11} />
-            Edit
-          </button>
+          {canEdit && (
+            <button onClick={onEdit} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 5, border: '1px solid rgba(249,115,22,0.25)', background: 'rgba(249,115,22,0.08)', color: '#F97316', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
+              <Edit2 size={11} />
+              Edit
+            </button>
+          )}
         </div>
       </td>
     </tr>

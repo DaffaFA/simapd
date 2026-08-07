@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/pagination'
 import { cn }       from '@/lib/utils'
 import { useAuth }  from '@/src/lib/AuthContext'
+import { EDITOR_ROLES, hasRole } from '@/src/lib/roles'
 
 const PAGE_SIZE  = 20
 const REFRESH_MS = 5000  // 5 detik
@@ -187,7 +188,7 @@ function StatusBadge({ status }: { status: Violation['status'] }) {
 // ── Komponen utama ─────────────────────────────────────────────────────────────
 export default function ViolationsPage() {
   const { user }  = useAuth()
-  const canEdit   = user?.role === 'safety_officer' || user?.role === 'admin'
+  const canEdit   = hasRole(user?.role, EDITOR_ROLES)
 
   // State
   const [violations,      setViolations]      = useState<Violation[]>([])
