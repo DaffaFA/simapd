@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SiMAPD — Safety Monitor System",
+  title: "SiMAPD - Safety Monitor System",
   description: "Sistem monitoring APD berbasis AI untuk lingkungan pelabuhan",
 };
 

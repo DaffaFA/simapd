@@ -27,7 +27,7 @@ export function ViolationFrame({ violationId, hasFrame, frameUrl, size = 'full',
   if (!hasFrame || !frameUrl) {
     return (
       <div style={{ ...containerStyle, background: '#0D1117', color: '#64748B' }} className={className}>
-        {size === 'thumb' ? '—' : 'Frame tidak tersedia'}
+        {size === 'thumb' ? '-' : 'Frame tidak tersedia'}
       </div>
     )
   }

@@ -153,14 +153,14 @@ export function LinkPersonnelPanel({ violationId, readOnly = false, onLinked }: 
         <div style={{ borderTop: '1px solid #1E2D3D', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <p style={{ fontSize: 13, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0', margin: 0 }}>Tambah Tautan Karyawan</p>
 
-          {/* Custom combobox — reliable di dalam modal */}
+          {/* Custom combobox - reliable di dalam modal */}
           <PersonnelCombobox
             onSelect={handleSelect}
             excluded={excludedIds}
             placeholder="Cari nama atau ID karyawan..."
           />
 
-          {/* Chips — yang akan di-link */}
+          {/* Chips - yang akan di-link */}
           {selected.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <p style={{ fontSize: 11, color: '#64748B', margin: 0 }}>Akan ditambahkan:</p>

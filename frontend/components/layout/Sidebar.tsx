@@ -12,7 +12,7 @@ const navItems: { to: string; label: string; icon: typeof LayoutDashboard; roles
   { to: '/violations', label: 'Pelanggaran', icon: AlertTriangle },
   { to: '/personnel', label: 'Personel & SP', icon: Users },
   { to: '/analytics', label: 'Analitik', icon: BarChart2 },
-  // Pengaturan mengubah konfigurasi SP & kamera — dibatasi sama seperti @Roles() di backend
+  // Pengaturan mengubah konfigurasi SP & kamera - dibatasi sama seperti @Roles() di backend
   { to: '/settings', label: 'Pengaturan', icon: Settings, roles: EDITOR_ROLES },
 ];
 
@@ -130,7 +130,7 @@ export function Sidebar() {
           {initials}
         </div>
         <div>
-          <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0' }}>{user?.full_name ?? '—'}</div>
+          <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0' }}>{user?.full_name ?? '-'}</div>
           <div style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>{user ? ROLE_LABELS[user.role] : ''}</div>
         </div>
       </div>

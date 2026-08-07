@@ -158,7 +158,7 @@ function PersonnelRow({ p, canEdit, onEdit }: { p: Personnel; canEdit: boolean; 
       </td>
       <td style={{ padding: '10px 14px' }}>
         <SPBadge level={p.sp} />
-        {!p.sp && <span style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>—</span>}
+        {!p.sp && <span style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>-</span>}
       </td>
       <td style={{ padding: '10px 14px', minWidth: 140 }}>
         <MiniProgressBar value={p.totalViolations} />
@@ -278,9 +278,9 @@ function PersonnelModal({ initialData, onClose, onSaved }: { initialData?: Perso
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Warna Helm</label>
             <select value={helmColor} onChange={e => setHelmColor(e.target.value)} style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none', cursor: 'pointer' }}>
-              <option value="Kuning">Kuning — Pekerja</option>
-              <option value="Putih">Putih — Supervisor</option>
-              <option value="Hijau">Hijau — Safety Officer</option>
+              <option value="Kuning">Kuning - Pekerja</option>
+              <option value="Putih">Putih - Supervisor</option>
+              <option value="Hijau">Hijau - Safety Officer</option>
             </select>
           </div>
         </div>

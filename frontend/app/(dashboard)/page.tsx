@@ -61,7 +61,7 @@ export default function Dashboard() {
       <div style={{ display: 'flex', gap: 16 }}>
         <StatCard
           label="Tingkat Kepatuhan"
-          value={loading ? '—' : `${complianceRate}%`}
+          value={loading ? '-' : `${complianceRate}%`}
           subtext="Rata-rata hari ini"
           trend={connected ? '● Live' : '○ Offline'}
           trendUp={connected}
@@ -71,7 +71,7 @@ export default function Dashboard() {
         />
         <StatCard
           label="Total Pelanggaran"
-          value={loading ? '—' : String(totalToday)}
+          value={loading ? '-' : String(totalToday)}
           subtext="Hari ini"
           trend={`${totalToday} hari ini`}
           trendUp={false}
@@ -81,7 +81,7 @@ export default function Dashboard() {
         />
         <StatCard
           label="Terhubung Personel"
-          value={loading ? '—' : totalLinked}
+          value={loading ? '-' : totalLinked}
           subtext={linkedPct}
           icon={<Users size={18} />}
           valueColor="#3B82F6"
@@ -89,7 +89,7 @@ export default function Dashboard() {
         />
         <StatCard
           label="Personel Ber-SP"
-          value={loading ? '—' : String(spTotal)}
+          value={loading ? '-' : String(spTotal)}
           subtext={spDetail}
           icon={<FileWarning size={18} />}
           valueColor="#F59E0B"
@@ -187,7 +187,7 @@ export default function Dashboard() {
                 <span className="text-red-400 text-lg shrink-0">⚠</span>
                 <div className="min-w-0">
                   <p className="font-medium text-red-800 truncate">
-                    {alert.camera_id} — {(alert.missing_ppe ?? [])
+                    {alert.camera_id} - {(alert.missing_ppe ?? [])
                       .map((p: string) =>
                         p === 'helm' ? 'Helm' : p === 'vest' ? 'Rompi' : 'Sepatu'
                       ).join(', ')} tidak terpasang

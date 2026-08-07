@@ -1,4 +1,4 @@
-// Sync dengan NestJS DTOs — update bila DTO berubah
+// Sync dengan NestJS DTOs - update bila DTO berubah
 
 export type HelmColor   = 'Kuning' | 'Putih' | 'Hijau' | 'Unknown'
 export type PersonRole  = 'Pekerja' | 'Supervisor' | 'Safety Officer'
@@ -6,7 +6,7 @@ export type SPLevel     = 'SP1' | 'SP2' | 'SP3'
 export type Shift       = 'Pagi' | 'Siang' | 'Malam'
 export type PPEItem     = 'helm' | 'vest' | 'sepatu'
 
-// Auth role — sync dengan enum di backend-nest/src/users/entities/user.entity.ts
+// Auth role - sync dengan enum di backend-nest/src/users/entities/user.entity.ts
 export type Role = 'safety_officer' | 'supervisor' | 'admin'
 
 export interface User { id: string; username: string; full_name: string; role: Role }

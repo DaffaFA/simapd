@@ -205,7 +205,7 @@ export default function PersonnelDetailPage() {
                   />
                 )
               ) : (
-                <p className="mt-1 font-medium text-white">{(personnel as any)[field] ?? '—'}</p>
+                <p className="mt-1 font-medium text-white">{(personnel as any)[field] ?? '-'}</p>
               )}
             </div>
           ))}
@@ -342,7 +342,7 @@ export default function PersonnelDetailPage() {
                           size="thumb"
                           className="w-10 h-10 object-cover rounded cursor-pointer border border-[#1E2D3D]"
                         />
-                      ) : <span className="text-gray-600 text-xs">—</span>}
+                      ) : <span className="text-gray-600 text-xs">-</span>}
                     </td>
                   </tr>
                 ))}
@@ -403,9 +403,9 @@ export default function PersonnelDetailPage() {
                   onChange={e => setSpLevel(e.target.value as 'SP1' | 'SP2' | 'SP3')}
                   className="w-full bg-[#0D1117] border border-[#1E2D3D] text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#F97316]"
                 >
-                  <option value="SP1">SP1 — Surat Peringatan Pertama</option>
-                  <option value="SP2">SP2 — Surat Peringatan Kedua</option>
-                  <option value="SP3">SP3 — Surat Peringatan Ketiga</option>
+                  <option value="SP1">SP1 - Surat Peringatan Pertama</option>
+                  <option value="SP2">SP2 - Surat Peringatan Kedua</option>
+                  <option value="SP3">SP3 - Surat Peringatan Ketiga</option>
                 </select>
               </div>
 

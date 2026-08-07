@@ -52,7 +52,7 @@ export default function MonitoringPage() {
         </div>
       </div>
 
-      {/* Error banner — tampil jika ada WS error */}
+      {/* Error banner - tampil jika ada WS error */}
       {wsError && !isConnected && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
           <span className="text-red-500 mt-0.5">⚠</span>
@@ -85,7 +85,7 @@ export default function MonitoringPage() {
                 <span className="text-red-500 text-lg">⚠</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-red-800">
-                    {alert.violation_code} — {alert.camera_id}
+                    {alert.violation_code} - {alert.camera_id}
                   </p>
                   <p className="text-xs text-red-600">
                     APD hilang: {(alert.missing_ppe ?? []).join(', ')} ·{' '}

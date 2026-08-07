@@ -1,4 +1,4 @@
-// group-violations.ts — works with the raw API Violation shape (not the shared/types frontend shape)
+// group-violations.ts - works with the raw API Violation shape (not the shared/types frontend shape)
 
 export interface RawViolation {
   id:             string

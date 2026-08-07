@@ -446,7 +446,7 @@ export default function ViolationsPage() {
                           <td style={{ padding: '10px 14px' }}>
                             {v.frame_key
                               ? <button onClick={() => downloadFrame(v.id)} style={{ background: 'transparent', border: 'none', color: '#3B82F6', cursor: 'pointer', fontSize: 16 }}>📷</button>
-                              : <span style={{ color: '#334155', fontSize: 12 }}>—</span>}
+                              : <span style={{ color: '#334155', fontSize: 12 }}>-</span>}
                           </td>
                           <td style={{ padding: '10px 14px' }}>
                             {v.links && v.links.length > 0 ? (
@@ -458,7 +458,7 @@ export default function ViolationsPage() {
                                 ))}
                               </div>
                             ) : (
-                              <span style={{ fontSize: 12, color: '#334155' }}>—</span>
+                              <span style={{ fontSize: 12, color: '#334155' }}>-</span>
                             )}
                           </td>
                           {canEdit && (

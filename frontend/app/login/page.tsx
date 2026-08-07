@@ -85,7 +85,7 @@ export default function Login() {
             <span style={{ color: '#F97316' }}>secara real-time.</span>
           </h2>
           <p style={{ fontSize: 14, color: '#64748B', lineHeight: 1.6, marginBottom: 40, maxWidth: 380 }}>
-            Sistem monitoring Alat Pelindung Diri berbasis AI untuk lingkungan pelabuhan — deteksi otomatis, pelacakan presisi, peringatan instan.
+            Sistem monitoring Alat Pelindung Diri berbasis AI untuk lingkungan pelabuhan - deteksi otomatis, pelacakan presisi, peringatan instan.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -209,16 +209,16 @@ export default function Login() {
             </button>
           </form>
 
-          <div style={{ marginTop: 20, padding: '10px 12px', background: 'rgba(100,116,139,0.08)', border: '1px solid rgba(100,116,139,0.15)', borderRadius: 6 }}>
+          {/* <div style={{ marginTop: 20, padding: '10px 12px', background: 'rgba(100,116,139,0.08)', border: '1px solid rgba(100,116,139,0.15)', borderRadius: 6 }}>
             <p style={{ fontSize: 11, color: '#64748B', margin: 0, textAlign: 'center' }}>
               🔑 Demo: <strong style={{ color: '#94A3B8' }}>admin</strong> / <strong style={{ color: '#94A3B8' }}>admin123</strong>
             </p>
-          </div>
+          </div> */}
         </div>
 
         <div style={{ marginTop: 20, textAlign: 'center' }}>
           <p style={{ fontSize: 11, color: '#64748B', margin: 0 }}>
-            SiMAPD v1.0.0 · Tugas Akhir — Teknik Informatika
+            SiMAPD v1.0.0 · Tugas Akhir
           </p>
         </div>
       </div>

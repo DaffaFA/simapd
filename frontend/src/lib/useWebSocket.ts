@@ -10,7 +10,7 @@ function buildWsUrl(token: string): string {
     if (typeof window === 'undefined') return ''
     const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     const host  = window.location.host                    // "localhost:3000" atau domain
-    // Jika Next.js dan NestJS di port berbeda, ini tidak akan benar —
+    // Jika Next.js dan NestJS di port berbeda, ini tidak akan benar -
     // tapi ini adalah fallback last resort
     console.warn('[WS] NEXT_PUBLIC_WS_URL tidak diset! Gunakan NEXT_PUBLIC_WS_URL di .env.local')
     return `${proto}//${host}/stream?token=${token}`
@@ -63,7 +63,7 @@ export function useWebSocket() {
 
     const token = localStorage.getItem('simapd_token') // USING simapd_token based on earlier checks
     if (!token) {
-      setWsError('Tidak ada token — login dulu')
+      setWsError('Tidak ada token - login dulu')
       return
     }
 
@@ -144,8 +144,8 @@ export function useWebSocket() {
       setIsConnected(false)
 
       // Log yang lebih informatif berdasarkan close code
-      if (evt.code === 1008) setWsError('Unauthorized — cek token JWT')
-      else if (evt.code === 1011) setWsError('Server error — cek NestJS logs')
+      if (evt.code === 1008) setWsError('Unauthorized - cek token JWT')
+      else if (evt.code === 1011) setWsError('Server error - cek NestJS logs')
 
       // Exponential backoff: 2s, 4s, 8s, max 16s
       const delay = Math.min(2000 * Math.pow(2, retryCount.current), 16000)

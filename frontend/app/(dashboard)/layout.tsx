@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       router.replace('/login');
       return;
     }
-    // Pengaturan mengubah konfigurasi SP & kamera — dibatasi ke role yang sama seperti @Roles() di backend
+    // Pengaturan mengubah konfigurasi SP & kamera - dibatasi ke role yang sama seperti @Roles() di backend
     if (pathname.startsWith('/settings') && !hasRole(user.role, EDITOR_ROLES)) {
       router.replace('/');
     }
