@@ -308,92 +308,124 @@ let AnalyticsService = class AnalyticsService {
             pattern: 'solid',
             fgColor: { argb: 'FFE3F0FF' },
         };
-        return Buffer.from((await wb.xlsx.writeBuffer()));
+        return Buffer.from(await wb.xlsx.writeBuffer());
     }
     _generatePdf(data) {
         return new Promise((resolve, reject) => {
             try {
                 const doc = new PDFDocument({
                     size: 'A4',
-                    margins: { top: 50, bottom: 50, left: 60, right: 60 },
+                    margins: { top: 40, bottom: 40, left: 50, right: 50 },
                 });
                 const chunks = [];
                 const stream = new stream_1.PassThrough();
                 doc.pipe(stream);
                 stream.on('data', (chunk) => chunks.push(chunk));
-                doc.on('pageAdded', () => {
+                const left = doc.page.margins.left;
+                const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+                let pageNum = 0;
+                const newPage = () => {
+                    if (pageNum > 0)
+                        doc.addPage();
+                    pageNum += 1;
+                    const footerY = doc.page.maxY() - 12;
                     doc
-                        .fontSize(10)
-                        .text(`SiMAPD v1.0 — Halaman ${doc.bufferedPageRange().count}`, 50, doc.page.height - 50, { align: 'center', lineBreak: false });
-                });
+                        .font('Helvetica')
+                        .fontSize(8)
+                        .fillColor('#94A3B8')
+                        .text(`SiMAPD v1.0 — Halaman ${pageNum}`, left, footerY, {
+                        width: contentWidth,
+                        align: 'center',
+                        lineBreak: false,
+                    });
+                    return doc.page.margins.top;
+                };
+                let y = newPage();
                 doc
-                    .fontSize(24)
-                    .text('Laporan Kepatuhan APD (SiMAPD)', { align: 'center' });
-                doc.moveDown();
+                    .font('Helvetica-Bold')
+                    .fontSize(18)
+                    .fillColor('#111827')
+                    .text('Laporan Kepatuhan APD (SiMAPD)', left, y);
+                y += 24;
                 doc
+                    .font('Helvetica')
+                    .fontSize(9)
+                    .fillColor('#64748B')
+                    .text(`Periode: ${data.dateFrom} s/d ${data.dateTo}   ·   Dicetak: ${new Date().toISOString().slice(0, 10)}`, left, y);
+                y += 26;
+                y = this._drawKpiRow(doc, [
+                    {
+                        label: 'TINGKAT KEPATUHAN',
+                        value: `${data.summary.compliance_rate}%`,
+                        color: '#22C55E',
+                    },
+                    {
+                        label: 'PELANGGARAN HARI INI',
+                        value: `${data.summary.total_violations_today}`,
+                        color: '#EF4444',
+                    },
+                    {
+                        label: 'PELANGGARAN PEKAN INI',
+                        value: `${data.summary.total_violations_week}`,
+                        color: '#F97316',
+                    },
+                    {
+                        label: 'SP AKTIF',
+                        value: `${data.summary.active_sp_count}`,
+                        color: '#3B82F6',
+                        sub: `SP1 ${data.summary.sp1_count} · SP2 ${data.summary.sp2_count} · SP3 ${data.summary.sp3_count}`,
+                    },
+                ], left, y, contentWidth);
+                y += 10;
+                doc
+                    .font('Helvetica')
+                    .fontSize(8)
+                    .fillColor('#94A3B8')
+                    .text(`Terhubung ke Personel: ${data.summary.linked_count}   ·   Belum Terhubung: ${data.summary.unlinked_count}`, left, y);
+                y += 24;
+                doc
+                    .font('Helvetica-Bold')
+                    .fontSize(12)
+                    .fillColor('#111827')
+                    .text('Tren Kepatuhan (7 Hari Terakhir)', left, y);
+                y += 18;
+                y = this._drawTrendChart(doc, data.trend, left, y, contentWidth, 110);
+                y += 18;
+                const colGap = 16;
+                const colWidth = (contentWidth - colGap) / 2;
+                this._drawHorizontalBars(doc, 'Distribusi per Jenis APD', [
+                    { label: 'Rompi', pct: data.byType.vest_pct, color: '#EF4444' },
+                    { label: 'Helm', pct: data.byType.helm_pct, color: '#F59E0B' },
+                    { label: 'Sepatu', pct: data.byType.shoes_pct, color: '#3B82F6' },
+                ], left, y, colWidth);
+                const shiftTotal = data.byShift.pagi + data.byShift.siang + data.byShift.malam || 1;
+                const shiftBars = [
+                    {
+                        label: 'Pagi (07–15)',
+                        pct: Math.round((data.byShift.pagi / shiftTotal) * 100),
+                        color: '#F97316',
+                    },
+                    {
+                        label: 'Siang (15–23)',
+                        pct: Math.round((data.byShift.siang / shiftTotal) * 100),
+                        color: '#F59E0B',
+                    },
+                    {
+                        label: 'Malam (23–07)',
+                        pct: Math.round((data.byShift.malam / shiftTotal) * 100),
+                        color: '#3B82F6',
+                    },
+                ];
+                const highestShift = shiftBars.reduce((a, b) => b.pct > a.pct ? b : a).label;
+                this._drawHorizontalBars(doc, 'Distribusi per Shift', shiftBars, left + colWidth + colGap, y, colWidth, `Tertinggi: ${highestShift}`);
+                y = newPage();
+                doc
+                    .font('Helvetica-Bold')
                     .fontSize(14)
-                    .text(`Periode: ${data.dateFrom} s/d ${data.dateTo}`, {
-                    align: 'center',
-                });
-                doc.text(`Tanggal Cetak: ${new Date().toISOString().slice(0, 10)}`, {
-                    align: 'center',
-                });
-                doc
-                    .fontSize(10)
-                    .text(`SiMAPD v1.0 — Halaman 1`, 50, doc.page.height - 50, {
-                    align: 'center',
-                });
-                doc.addPage();
-                doc.fontSize(18).text('Ringkasan Kepatuhan', { underline: true });
-                doc.moveDown();
-                doc
-                    .fontSize(12)
-                    .text(`Tingkat Kepatuhan: ${data.summary.compliance_rate}%`);
-                doc.text(`Total Pelanggaran (Hari Ini): ${data.summary.total_violations_today}`);
-                doc.text(`Total Pelanggaran (Pekan Ini): ${data.summary.total_violations_week}`);
-                doc.text(`Pelanggaran Terhubung Personel: ${data.summary.linked_count}`);
-                doc.text(`Pelanggaran Belum Terhubung: ${data.summary.unlinked_count}`);
-                doc.moveDown();
-                doc.text(`Surat Peringatan (SP) Aktif: ${data.summary.active_sp_count}`);
-                doc.text(`- SP1: ${data.summary.sp1_count}`);
-                doc.text(`- SP2: ${data.summary.sp2_count}`);
-                doc.text(`- SP3: ${data.summary.sp3_count}`);
-                doc.addPage();
-                doc
-                    .fontSize(18)
-                    .text('Tren Kepatuhan (7 Hari Terakhir)', { underline: true });
-                doc.moveDown();
-                for (const t of data.trend) {
-                    doc
-                        .fontSize(12)
-                        .text(`${t.date} : ${t.total_violations} Pelanggaran (Kepatuhan: ${t.compliance_rate}%)`);
-                }
-                doc.addPage();
-                doc
-                    .fontSize(18)
-                    .text('Distribusi Pelanggaran APD', { underline: true });
-                doc.moveDown();
-                doc
-                    .fontSize(12)
-                    .text(`Tanpa Helm: ${data.byType.helm} (${data.byType.helm_pct}%)`);
-                doc.text(`Tanpa Rompi: ${data.byType.vest} (${data.byType.vest_pct}%)`);
-                doc.text(`Tanpa Sepatu: ${data.byType.shoes} (${data.byType.shoes_pct}%)`);
-                doc.moveDown(2);
-                doc
-                    .fontSize(18)
-                    .text('Distribusi Berdasarkan Shift', { underline: true });
-                doc.moveDown();
-                doc.fontSize(12).text(`Shift Pagi: ${data.byShift.pagi}`);
-                doc.text(`Shift Siang: ${data.byShift.siang}`);
-                doc.text(`Shift Malam: ${data.byShift.malam}`);
-                doc.addPage();
-                doc.fontSize(18).text('Top 10 Pelanggar', { underline: true });
-                doc.moveDown();
-                for (const [idx, o] of data.offenders.entries()) {
-                    doc
-                        .fontSize(12)
-                        .text(`${idx + 1}. ${o.full_name} (ID: ${o.employee_id}) - ${o.role}: ${o.violation_count} kali pelanggaran`);
-                }
+                    .fillColor('#111827')
+                    .text('Top 10 Pelanggar', left, y);
+                y += 22;
+                this._drawOffendersTable(doc, data.offenders, left, y, contentWidth);
                 doc.end();
                 stream.on('end', () => resolve(Buffer.concat(chunks)));
                 stream.on('error', (err) => reject(err));
@@ -402,6 +434,192 @@ let AnalyticsService = class AnalyticsService {
                 reject(err);
             }
         });
+    }
+    _drawKpiRow(doc, kpis, x, y, width) {
+        const gap = 10;
+        const boxHeight = 54;
+        const boxWidth = (width - gap * (kpis.length - 1)) / kpis.length;
+        kpis.forEach((kpi, i) => {
+            const bx = x + i * (boxWidth + gap);
+            doc
+                .roundedRect(bx, y, boxWidth, boxHeight, 4)
+                .fillAndStroke('#F8FAFC', '#E2E8F0');
+            doc
+                .font('Helvetica')
+                .fontSize(7)
+                .fillColor('#64748B')
+                .text(kpi.label, bx + 8, y + 8, { width: boxWidth - 16 });
+            doc
+                .font('Helvetica-Bold')
+                .fontSize(18)
+                .fillColor(kpi.color)
+                .text(kpi.value, bx + 8, y + 20, { width: boxWidth - 16 });
+            if (kpi.sub) {
+                doc
+                    .font('Helvetica')
+                    .fontSize(6.5)
+                    .fillColor('#94A3B8')
+                    .text(kpi.sub, bx + 8, y + 42, { width: boxWidth - 16 });
+            }
+        });
+        return y + boxHeight;
+    }
+    _drawTrendChart(doc, trend, x, y, width, height) {
+        if (!trend || trend.length === 0) {
+            doc
+                .font('Helvetica')
+                .fontSize(9)
+                .fillColor('#94A3B8')
+                .text('Belum ada data tren', x, y);
+            return y + 20;
+        }
+        const gap = 6;
+        const barWidth = (width - gap * (trend.length - 1)) / trend.length;
+        const baseline = y + height;
+        doc
+            .moveTo(x, baseline)
+            .lineTo(x + width, baseline)
+            .strokeColor('#E2E8F0')
+            .lineWidth(1)
+            .stroke();
+        trend.forEach((t, i) => {
+            const bx = x + i * (barWidth + gap);
+            const barHeight = Math.max(2, (t.compliance_rate / 100) * height);
+            const isLast = i === trend.length - 1;
+            const color = isLast
+                ? '#F97316'
+                : t.compliance_rate >= 78
+                    ? '#22C55E'
+                    : '#F97316';
+            doc
+                .rect(bx, baseline - barHeight, barWidth, barHeight)
+                .fillOpacity(isLast ? 1 : 0.75)
+                .fill(color)
+                .fillOpacity(1);
+            doc
+                .font('Helvetica')
+                .fontSize(6.5)
+                .fillColor('#64748B')
+                .text(`${t.compliance_rate}%`, bx, baseline - barHeight - 10, {
+                width: barWidth,
+                align: 'center',
+            });
+            doc
+                .font('Helvetica')
+                .fontSize(6.5)
+                .fillColor('#64748B')
+                .text(t.date.slice(5), bx, baseline + 4, {
+                width: barWidth,
+                align: 'center',
+            });
+        });
+        return baseline + 16;
+    }
+    _drawHorizontalBars(doc, title, items, x, y, width, note) {
+        let cy = y;
+        doc
+            .font('Helvetica-Bold')
+            .fontSize(10)
+            .fillColor('#111827')
+            .text(title, x, cy, { width });
+        cy += 16;
+        const trackHeight = 5;
+        for (const item of items) {
+            doc
+                .font('Helvetica')
+                .fontSize(8)
+                .fillColor('#64748B')
+                .text(item.label, x, cy, { width: width - 40 });
+            doc
+                .font('Helvetica-Bold')
+                .fontSize(8)
+                .fillColor(item.color)
+                .text(`${item.pct}%`, x + width - 40, cy, {
+                width: 40,
+                align: 'right',
+            });
+            cy += 12;
+            doc
+                .roundedRect(x, cy, width, trackHeight, trackHeight / 2)
+                .fill('#E2E8F0');
+            const fillWidth = Math.max(0, Math.min(width, (item.pct / 100) * width));
+            if (fillWidth > 0) {
+                doc
+                    .roundedRect(x, cy, fillWidth, trackHeight, trackHeight / 2)
+                    .fill(item.color);
+            }
+            cy += trackHeight + 10;
+        }
+        if (note) {
+            doc
+                .font('Helvetica')
+                .fontSize(7.5)
+                .fillColor('#F97316')
+                .text(note, x, cy, { width });
+            cy += 12;
+        }
+        return cy;
+    }
+    _drawOffendersTable(doc, offenders, x, y, width) {
+        const colRank = 24;
+        const colCount = 70;
+        const colRole = 140;
+        const colName = width - colRank - colCount - colRole;
+        const rowHeight = 20;
+        doc.font('Helvetica-Bold').fontSize(8).fillColor('#64748B');
+        doc.text('#', x, y, { width: colRank });
+        doc.text('NAMA', x + colRank, y, { width: colName });
+        doc.text('PERAN', x + colRank + colName, y, { width: colRole });
+        doc.text('PELANGGARAN', x + colRank + colName + colRole, y, {
+            width: colCount,
+            align: 'right',
+        });
+        y += 14;
+        doc
+            .moveTo(x, y)
+            .lineTo(x + width, y)
+            .strokeColor('#E2E8F0')
+            .lineWidth(1)
+            .stroke();
+        y += 6;
+        if (!offenders || offenders.length === 0) {
+            doc
+                .font('Helvetica')
+                .fontSize(9)
+                .fillColor('#94A3B8')
+                .text('Belum ada data pelanggar', x, y);
+            return y + 20;
+        }
+        offenders.forEach((o, i) => {
+            const countColor = o.violation_count >= 7
+                ? '#EF4444'
+                : o.violation_count >= 3
+                    ? '#F59E0B'
+                    : '#22C55E';
+            doc
+                .font('Helvetica')
+                .fontSize(9)
+                .fillColor('#111827')
+                .text(`${i + 1}`, x, y, { width: colRank });
+            doc
+                .font('Helvetica-Bold')
+                .text(o.full_name, x + colRank, y, { width: colName });
+            doc
+                .font('Helvetica')
+                .fillColor('#64748B')
+                .text(`${o.role} (${o.employee_id})`, x + colRank + colName, y, {
+                width: colRole,
+            });
+            doc
+                .font('Helvetica-Bold')
+                .fillColor(countColor)
+                .text(`${o.violation_count}`, x + colRank + colName + colRole, y, {
+                width: colCount,
+                align: 'right',
+            });
+            y += rowHeight;
+        });
+        return y;
     }
 };
 exports.AnalyticsService = AnalyticsService;

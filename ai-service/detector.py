@@ -33,6 +33,12 @@ class PPEDetector:
         'Putih':  (np.array([ 0,   0, 170]), np.array([180,  40, 255])),
     }
 
+    # IoA minimum agar item APD dianggap milik seorang pekerja
+    PPE_IOA_THRESHOLD = 0.6
+    # Jumlah frame toleransi sebelum pelanggaran benar-benar ditandai
+    # (mencegah flicker akibat oklusi singkat, mis. tangan menutupi vest)
+    COMPLIANCE_GRACE_FRAMES = 15
+
     def __init__(
         self,
         model_path:  str,
@@ -53,6 +59,10 @@ class PPEDetector:
         self.sahi_model = None   # SAHI AutoDetectionModel (untuk SAHI mode)
         self.tracker    = None   # supervision ByteTrack (hanya SAHI mode)
         self.is_loaded  = False
+
+        # State untuk temporal smoothing kepatuhan (per track_id, persist antar frame)
+        self._frame_counter      = 0
+        self._compliance_history = {}   # track_id -> last_compliant_frame_idx
 
         # Class sets — diisi oleh _build_class_sets() setelah model di-load
         self.PERSON_CLASSES = set()
@@ -175,6 +185,8 @@ class PPEDetector:
         if not self.is_loaded:
             raise RuntimeError('Panggil load() sebelum process_frame()')
 
+        self._frame_counter += 1
+
         if self.use_sahi:
             return self._process_with_sahi(frame_bgr, camera_id)
         else:
@@ -226,12 +238,16 @@ class PPEDetector:
                 track_id = int(box.id[0])
                 person_info.append(([x1, y1, x2, y2], track_id, conf))
 
+        # ── Assign APD ke orang via IoA, lalu evaluasi kepatuhan ──────────────
+        person_boxes = [bbox for bbox, _, _ in person_info]
+        equipment    = self._assign_ppe(person_boxes, all_boxes, all_labels)
+
         # ── Per-person: PPE lookup + helm color ──────────────────────────────
         outputs = []
-        for bbox, track_id, conf in person_info:
-            person_labels = self._get_labels_for_person(bbox, all_boxes, all_labels)
-            helm_color    = self.classify_helm_color(frame_bgr, bbox)
-            ppe           = self._check_ppe(person_labels)
+        for (bbox, track_id, conf), eq in zip(person_info, equipment):
+            helm_color = self.classify_helm_color(frame_bgr, bbox)
+            ppe        = self._check_ppe(eq)
+            ppe['is_compliant'] = self._smooth_compliance(track_id, ppe['is_compliant'])
 
             outputs.append({
                 'track_id':   track_id,
@@ -311,22 +327,25 @@ class PPEDetector:
         if tracked.tracker_id is None or len(tracked.tracker_id) == 0:
             return []
 
+        # ── Assign APD ke orang (post-tracking) via IoA ───────────────────────
+        tracked_boxes = [bbox.tolist() for bbox in tracked.xyxy]
+        equipment     = self._assign_ppe(tracked_boxes, all_boxes, all_labels)
+
         # ── Per-person: PPE + helm color ─────────────────────────────────────
         head_boxes = [b for b, l in zip(all_boxes, all_labels)
                       if l in self.HEAD_CLASSES]
         outputs = []
-        for bbox, track_id, conf in zip(
-            tracked.xyxy, tracked.tracker_id, tracked.confidence
+        for bl, track_id, conf, eq in zip(
+            tracked_boxes, tracked.tracker_id, tracked.confidence, equipment
         ):
-            bl = bbox.tolist()
             px1, py1, px2, py2 = bl
             local_heads = [h for h in head_boxes
                            if px1 <= (h[0]+h[2])/2 <= px2
                            and py1 <= (h[1]+h[3])/2 <= py2]
-            person_labels = self._get_labels_for_person(bl, all_boxes, all_labels)
-            helm_color    = self.classify_helm_color(frame_bgr, bl,
-                                                     local_heads or None)
-            ppe           = self._check_ppe(person_labels)
+            helm_color = self.classify_helm_color(frame_bgr, bl,
+                                                   local_heads or None)
+            ppe        = self._check_ppe(eq)
+            ppe['is_compliant'] = self._smooth_compliance(int(track_id), ppe['is_compliant'])
 
             outputs.append({
                 'track_id':   int(track_id),
@@ -344,31 +363,76 @@ class PPEDetector:
     # HELPERS
     # ──────────────────────────────────────────────────────────────────────────
 
-    def _get_labels_for_person(
+    @staticmethod
+    def _calculate_ioa(person_box: list, item_box: list) -> float:
+        """
+        Intersection over Area (IoA) dari item_box yang tercakup di dalam
+        person_box. box format: [x1, y1, x2, y2].
+        """
+        px1, py1, px2, py2 = person_box
+        ix1, iy1, ix2, iy2 = item_box
+
+        x_left, y_top     = max(px1, ix1), max(py1, iy1)
+        x_right, y_bottom = min(px2, ix2), min(py2, iy2)
+        if x_right < x_left or y_bottom < y_top:
+            return 0.0
+
+        intersection = (x_right - x_left) * (y_bottom - y_top)
+        item_area     = (ix2 - ix1) * (iy2 - iy1)
+        if item_area == 0:
+            return 0.0
+
+        return intersection / item_area
+
+    def _assign_ppe(
         self,
-        person_bbox: list,
-        all_boxes:   list,
-        all_labels:  list,
+        person_boxes: list,
+        all_boxes:    list,
+        all_labels:   list,
     ) -> list:
-        """Cari PPE labels yang berada di dalam area bounding box orang."""
-        px1, py1, px2, py2 = person_bbox
-        margin_x = (px2 - px1) * 0.20   # 20% margin horizontal
+        """
+        Tetapkan tiap item APD (helm/vest/shoes) ke orang dengan IoA
+        tertinggi (>= PPE_IOA_THRESHOLD). Mengembalikan satu dict per orang:
+        {'helm': bool, 'vest': bool, 'shoes': int}.
+        """
+        equipment = [{'helm': False, 'vest': False, 'shoes': 0} for _ in person_boxes]
+        if not person_boxes:
+            return equipment
 
-        return [
-            label
-            for box, label in zip(all_boxes, all_labels)
-            if label not in self.PERSON_CLASSES
-            and (px1 - margin_x) <= (box[0]+box[2])/2 <= (px2 + margin_x)
-            and py1 <= (box[1]+box[3])/2 <= py2
-        ]
+        helm_classes = {c.lower() for c in self.HELM_CLASSES}
+        vest_classes = {c.lower() for c in self.VEST_CLASSES}
+        shoe_classes = {c.lower() for c in self.SHOE_CLASSES}
 
-    def _check_ppe(self, labels: list) -> dict:
-        """Cek kepatuhan APD dari list label yang ada di area orang."""
-        ls = {l.lower() for l in labels}
+        for box, label in zip(all_boxes, all_labels):
+            ll = label.lower()
+            if ll in helm_classes:
+                key = 'helm'
+            elif ll in vest_classes:
+                key = 'vest'
+            elif ll in shoe_classes:
+                key = 'shoes'
+            else:
+                continue
 
-        has_helm  = bool(ls & {c.lower() for c in self.HELM_CLASSES})
-        has_vest  = bool(ls & {c.lower() for c in self.VEST_CLASSES})
-        has_shoes = bool(ls & {c.lower() for c in self.SHOE_CLASSES})
+            best_ioa, best_idx = 0.0, -1
+            for i, person_box in enumerate(person_boxes):
+                ioa = self._calculate_ioa(person_box, box)
+                if ioa > best_ioa:
+                    best_ioa, best_idx = ioa, i
+
+            if best_idx != -1 and best_ioa >= self.PPE_IOA_THRESHOLD:
+                if key == 'shoes':
+                    equipment[best_idx]['shoes'] += 1
+                else:
+                    equipment[best_idx][key] = True
+
+        return equipment
+
+    def _check_ppe(self, equipment: dict) -> dict:
+        """Cek kepatuhan APD dari hasil assignment {'helm','vest','shoes'}."""
+        has_helm  = equipment['helm']
+        has_vest  = equipment['vest']
+        has_shoes = equipment['shoes'] >= 1
 
         missing = []
         if not has_helm:  missing.append('helm')
@@ -382,6 +446,28 @@ class PPEDetector:
             'missing_ppe':   missing,
             'is_compliant':  len(missing) == 0,
         }
+
+    def _smooth_compliance(self, track_id, is_compliant: bool) -> bool:
+        """
+        Temporal smoothing: pekerja hanya ditandai VIOLATION jika sudah
+        non-compliant lebih lama dari COMPLIANCE_GRACE_FRAMES sejak terakhir
+        kali terlihat compliant (mencegah flicker akibat oklusi singkat).
+        """
+        if track_id is None:
+            return is_compliant
+
+        frame_idx = self._frame_counter
+        if track_id not in self._compliance_history:
+            self._compliance_history[track_id] = (
+                frame_idx if is_compliant else -self.COMPLIANCE_GRACE_FRAMES
+            )
+
+        if is_compliant:
+            self._compliance_history[track_id] = frame_idx
+            return True
+
+        frames_missing = frame_idx - self._compliance_history[track_id]
+        return frames_missing <= self.COMPLIANCE_GRACE_FRAMES
 
     def classify_helm_color(
         self,

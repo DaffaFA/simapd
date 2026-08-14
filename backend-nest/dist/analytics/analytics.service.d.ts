@@ -48,4 +48,8 @@ export declare class AnalyticsService {
     exportPdf(dateFrom?: string, dateTo?: string): Promise<Buffer>;
     exportExcel(dateFrom?: string, dateTo?: string): Promise<Buffer>;
     private _generatePdf;
+    private _drawKpiRow;
+    private _drawTrendChart;
+    private _drawHorizontalBars;
+    private _drawOffendersTable;
 }
