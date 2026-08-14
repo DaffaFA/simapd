@@ -1,5 +1,5 @@
 # Python
-__pycache__/
+__pycache__
 *.py[cod]
 *.pyo
 
@@ -14,7 +14,7 @@ env/
 .env.local
 
 # Models & captures (large/generated artifacts)
-models/
+# models/
 captures/
 
 # Test / coverage
