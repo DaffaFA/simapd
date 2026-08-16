@@ -59,6 +59,7 @@ class PPEDetector:
         self.sahi_model = None   # SAHI AutoDetectionModel (untuk SAHI mode)
         self.tracker    = None   # supervision ByteTrack (hanya SAHI mode)
         self.is_loaded  = False
+        self.device     = None   # str | torch.device — device model dijalankan
 
         # State untuk temporal smoothing kepatuhan (per track_id, persist antar frame)
         self._frame_counter      = 0
@@ -83,11 +84,85 @@ class PPEDetector:
         except ImportError:
             return False
 
-    def _get_device(self) -> str:
+    def _has_directml(self) -> bool:
+        try:
+            import torch_directml
+            return torch_directml.is_available()
+        except ImportError:
+            return False
+
+    @staticmethod
+    def _is_directml(device) -> bool:
+        import torch
+        return isinstance(device, torch.device) and device.type == 'privateuseone'
+
+    _directml_patched = False   # process-wide, applied once
+
+    @classmethod
+    def _patch_directml_compat(cls) -> None:
+        """
+        torch-directml's PrivateUse1 backend has op-coverage gaps that
+        ultralytics' CUDA/CPU-oriented code paths trip over:
+
+        1. ultralytics decorates its inference entry points with
+           torch.inference_mode() (via smart_inference_mode(), bound at
+           import time). DirectML's BatchNorm kernel can't update the
+           running-stat buffers' version_counter on tensors created inside
+           inference_mode ("Cannot set version_counter for inference
+           tensor"). Swapping torch.inference_mode -> torch.no_grad before
+           ultralytics is first imported avoids that tensor category
+           entirely. This must run before any `import ultralytics...`.
+        2. Boolean mask indexing (`tensor[mask]`), used by
+           non_max_suppression(), isn't implemented for DirectML and
+           surfaces as a raw HRESULT ("Unknown error -2147024809"). Run NMS
+           on a CPU copy of the raw predictions instead — cheap relative to
+           the conv backbone that actually benefits from the GPU.
+        """
+        if cls._directml_patched:
+            return
+
+        import torch
+        torch.inference_mode = torch.no_grad
+
+        import ultralytics.utils.ops as ops
+        orig_nms = ops.non_max_suppression
+
+        def _to_cpu(x):
+            if isinstance(x, torch.Tensor):
+                return x.cpu()
+            if isinstance(x, (list, tuple)):
+                return type(x)(_to_cpu(v) for v in x)
+            return x
+
+        def _dml_safe_nms(prediction, *args, **kwargs):
+            return orig_nms(_to_cpu(prediction), *args, **kwargs)
+
+        ops.non_max_suppression = _dml_safe_nms
+        cls._directml_patched = True
+
+    def _get_device(self):
+        """Resolve the device to run on. Returns a str for cpu/cuda (which
+        Ultralytics' select_device() parses itself) or a torch.device object
+        for DirectML (select_device() passes torch.device instances through
+        untouched, so this is the only form DirectML can be requested in)."""
         env = os.environ.get('INFERENCE_DEVICE', '').strip().lower()
+
+        if env in ('dml', 'directml'):
+            if self._has_directml():
+                import torch_directml
+                return torch_directml.device()
+            print('[PPEDetector] DirectML diminta tapi tidak tersedia, fallback ke CPU')
+            return 'cpu'
+
         if env in ('cpu', 'cuda', 'cuda:0'):
             return env
-        return 'cuda:0' if self._has_cuda() else 'cpu'
+
+        if self._has_cuda():
+            return 'cuda:0'
+        if self._has_directml():
+            import torch_directml
+            return torch_directml.device()
+        return 'cpu'
 
     def _build_class_sets(self, model_names: dict) -> None:
         """
@@ -123,11 +198,16 @@ class PPEDetector:
         if not os.path.exists(self.model_path):
             raise FileNotFoundError(f'Model tidak ditemukan: {self.model_path}')
 
+        device = self._get_device()
+        if self._is_directml(device):
+            # Must run before ultralytics is imported anywhere else in the
+            # process — see _patch_directml_compat() for why.
+            self._patch_directml_compat()
+
         import torch
         torch.backends.cudnn.benchmark     = False
         torch.backends.cudnn.deterministic = True
 
-        device = self._get_device()
         print(f'[PPEDetector] Device: {device} | SAHI: {self.use_sahi}')
 
         if self.use_sahi:
@@ -139,20 +219,38 @@ class PPEDetector:
         mode = f'SAHI ({self.slice_h}x{self.slice_w})' if self.use_sahi else 'model.track()'
         print(f'[PPEDetector] Ready: {Path(self.model_path).name} | mode={mode}')
 
-    def _load_direct(self, device: str) -> None:
+    def _load_direct(self, device) -> None:
         """Load model untuk mode no-SAHI (model.track())."""
         from ultralytics import YOLO
         self.model = YOLO(self.model_path)
         self.model.to(device)
+        self.device = device
+
+        if self._is_directml(device):
+            # Ultralytics' RepConv.fuse_convs() rebuilds the fused layer as a
+            # plain nn.Conv2d() without moving it to the source kernel's
+            # device, so on DirectML `self.conv.weight.data = kernel` crashes
+            # with a device-mismatch error. Skip fusion on this backend —
+            # same numerics, just leaves BatchNorm unmerged.
+            self.model.model.fuse = lambda verbose=True: self.model.model
+            # AutoBackend warms up under torch.inference_mode() before it
+            # ever calls .eval(), so BatchNorm still runs in training mode
+            # (in-place running-stat updates). DirectML's PrivateUse1 backend
+            # can't version-track that in-place buffer write inside
+            # inference_mode ("Cannot set version_counter for inference
+            # tensor"). Eval mode here avoids the in-place update entirely.
+            self.model.model.eval()
+
         self._build_class_sets(self.model.names)
         print(f'[PPEDetector] Loaded via YOLO.track() — '
               f'{len(self.model.names)} kelas')
 
-    def _load_sahi(self, device: str) -> None:
+    def _load_sahi(self, device) -> None:
         """Load model untuk mode SAHI + supervision ByteTrack."""
         from sahi import AutoDetectionModel
         import supervision as sv
 
+        self.device = device
         self.sahi_model = AutoDetectionModel.from_pretrained(
             model_type           = 'ultralytics',
             model_path           = self.model_path,
@@ -213,6 +311,8 @@ class PPEDetector:
             iou            = 0.5,
             imgsz          = 640,
             verbose        = False,
+            device         = self.device,   # setiap call re-resolve device sendiri,
+                                             # jadi harus dikirim ulang di sini
         )
 
         if not results or results[0].boxes is None:

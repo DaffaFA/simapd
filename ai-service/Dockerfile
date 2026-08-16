@@ -4,8 +4,11 @@ WORKDIR /app
 COPY requirements.txt .
 # CPU-only torch/torchvision first: ultralytics otherwise pulls the default
 # CUDA build (~2GB of nvidia-* wheels) that this laptop can't use anyway.
+# torch-directml pins torch==2.3.1/torchvision==0.18.1 exactly — it patches
+# them with the PrivateUse1 (DirectML) backend, so the versions must match.
 RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu \
     torch==2.3.1 torchvision==0.18.1 \
+ && pip install --no-cache-dir torch-directml==0.2.4.dev240815 \
  && pip install --no-cache-dir -r requirements.txt
 COPY . .
 RUN mkdir -p models captures

@@ -129,13 +129,15 @@ services:
     env_file: ./ai-service/.env
     environment:
       - REDIS_URL=redis://redis:6379
-      - YOLO_MODEL_PATH=models/simapd_yolov8m_sh17_DEPLOY.pt
+      - YOLO_MODEL_PATH=models/yolo9m.pt
       - USE_SAHI=false
       - YOLO_CONFIDENCE=0.40
       - SAHI_SLICE_HEIGHT=512
       - SAHI_SLICE_WIDTH=512
       - SAHI_OVERLAP=0.25
       - CAPTURES_DIR=/app/captures
+      - INFERENCE_DEVICE=dml   # AMD RX 6600 XT via DirectML (lihat devices/volumes di bawah)
+      - LD_LIBRARY_PATH=/usr/lib/wsl/lib
 
       # ── PILIH SALAH SATU: ────────────────────────────────────────────────────
 
@@ -171,7 +173,14 @@ services:
     volumes:
       - ./ai-service/models:/app/models:ro   # YOLO .pt file (read-only)
       - ./videos:/app/videos:ro   # ← baru: mount folder videos (read-only, dipakai Opsi C)
-    # Uncomment untuk GPU:
+      # GPU AMD (RX 6600 XT) via DirectML — WSL2 memaparkan GPU host lewat
+      # /dev/dxg + userspace driver di /usr/lib/wsl/lib, bukan lewat
+      # nvidia-container-toolkit. Hanya jalan di Docker Desktop/WSL2, bukan
+      # native Linux (di sana pakai ROCm, bukan DirectML).
+      - /usr/lib/wsl:/usr/lib/wsl:ro
+    devices:
+      - /dev/dxg
+    # Uncomment untuk GPU NVIDIA (mutually exclusive dengan DirectML di atas):
     # deploy:
     #   resources:
     #     reservations:
@@ -184,6 +193,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost/api/v1
+        NEXT_PUBLIC_WS_URL:  ws://localhost
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://localhost/api/v1

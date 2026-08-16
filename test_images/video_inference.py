@@ -229,6 +229,7 @@ def detect_all_objects(detector: PPEDetector, frame) -> list:
         results = detector.model.track(
             source=frame, persist=True, tracker='bytetrack.yaml',
             conf=detector.confidence, iou=0.5, imgsz=640, verbose=False,
+            device=detector.device,
         )
         if results and results[0].boxes is not None:
             for box in results[0].boxes:
@@ -252,7 +253,7 @@ def main() -> None:
                          help='Video filename (relative to test_images/) or full path')
     parser.add_argument('--model', default=default_model, help='Path to YOLO .pt weights')
     parser.add_argument('--conf', type=float, default=0.40, help='Confidence threshold')
-    parser.add_argument('--device', default='cpu', help='cpu | cuda | cuda:0')
+    parser.add_argument('--device', default='dml', help='cpu | cuda | cuda:0 | dml (DirectML, e.g. AMD GPUs via WSL)')
     parser.add_argument('--sahi', action='store_true', help='Use SAHI sliced prediction')
     parser.add_argument('--every-n', type=int, default=1,
                          help='Run detection every N frames (frames in between reuse the last drawn boxes)')
