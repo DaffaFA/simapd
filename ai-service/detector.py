@@ -33,6 +33,12 @@ class PPEDetector:
         'Putih':  (np.array([ 0,   0, 170]), np.array([180,  40, 255])),
     }
 
+    # Pixel V di atas ini biasanya specular highlight (pantulan cahaya di
+    # permukaan helm yang glossy), bukan warna material helm itu sendiri.
+    # Kalau ikut dihitung, glare pada helm kuning/hijau bisa ke-baca sebagai
+    # "Putih" karena sama-sama low-saturation/high-value. Dibuang dari voting.
+    HELM_SPECULAR_V_MAX = 250
+
     # IoA minimum agar item APD dianggap milik seorang pekerja
     PPE_IOA_THRESHOLD = 0.6
     # Jumlah frame toleransi sebelum pelanggaran benar-benar ditandai
@@ -345,7 +351,7 @@ class PPEDetector:
         # ── Per-person: PPE lookup + helm color ──────────────────────────────
         outputs = []
         for (bbox, track_id, conf), eq in zip(person_info, equipment):
-            helm_color = self.classify_helm_color(frame_bgr, bbox)
+            helm_color = self.classify_helm_color(frame_bgr, bbox, helmet_box=eq['helm_box'])
             ppe        = self._check_ppe(eq)
             ppe['is_compliant'] = self._smooth_compliance(track_id, ppe['is_compliant'])
 
@@ -443,7 +449,8 @@ class PPEDetector:
                            if px1 <= (h[0]+h[2])/2 <= px2
                            and py1 <= (h[1]+h[3])/2 <= py2]
             helm_color = self.classify_helm_color(frame_bgr, bl,
-                                                   local_heads or None)
+                                                   local_heads or None,
+                                                   helmet_box=eq['helm_box'])
             ppe        = self._check_ppe(eq)
             ppe['is_compliant'] = self._smooth_compliance(int(track_id), ppe['is_compliant'])
 
@@ -493,15 +500,20 @@ class PPEDetector:
         """
         Tetapkan tiap item APD (helm/vest/shoes) ke orang dengan IoA
         tertinggi (>= PPE_IOA_THRESHOLD). Mengembalikan satu dict per orang:
-        {'helm': bool, 'vest': bool, 'shoes': int}.
+        {'helm': bool, 'vest': bool, 'shoes': int, 'helm_box': list|None}.
+        helm_box adalah bbox helm asli (bukan perkiraan) — dipakai
+        classify_helm_color() supaya crop warna presisi ke helm itu sendiri,
+        bukan seperempat-atas bounding box orang.
         """
-        equipment = [{'helm': False, 'vest': False, 'shoes': 0} for _ in person_boxes]
+        equipment = [{'helm': False, 'vest': False, 'shoes': 0, 'helm_box': None}
+                     for _ in person_boxes]
         if not person_boxes:
             return equipment
 
         helm_classes = {c.lower() for c in self.HELM_CLASSES}
         vest_classes = {c.lower() for c in self.VEST_CLASSES}
         shoe_classes = {c.lower() for c in self.SHOE_CLASSES}
+        helm_best_ioa = [0.0] * len(person_boxes)
 
         for box, label in zip(all_boxes, all_labels):
             ll = label.lower()
@@ -523,6 +535,12 @@ class PPEDetector:
             if best_idx != -1 and best_ioa >= self.PPE_IOA_THRESHOLD:
                 if key == 'shoes':
                     equipment[best_idx]['shoes'] += 1
+                elif key == 'helm':
+                    equipment[best_idx]['helm'] = True
+                    # Simpan box IoA tertinggi kalau ada >1 kandidat helm.
+                    if best_ioa > helm_best_ioa[best_idx]:
+                        helm_best_ioa[best_idx] = best_ioa
+                        equipment[best_idx]['helm_box'] = box
                 else:
                     equipment[best_idx][key] = True
 
@@ -574,14 +592,23 @@ class PPEDetector:
         frame_bgr: np.ndarray,
         person_bbox: list,
         head_boxes: list = None,
+        helmet_box: list = None,
     ) -> str:
         """
         Klasifikasi warna helm dari area kepala.
-        Prioritas: head_boxes (jika ada) → 1/4 atas person_bbox.
+        Prioritas: helmet_box (bbox helm hasil deteksi model, paling presisi)
+        → head_boxes (bbox kelas 'head', SAHI only) → 1/4 atas person_bbox
+        (perkiraan kasar, dipakai kalau helm tidak terdeteksi sama sekali).
         """
         crop = None
 
-        if head_boxes:
+        if helmet_box is not None:
+            hx1, hy1, hx2, hy2 = [int(v) for v in helmet_box]
+            candidate = frame_bgr[max(0,hy1):hy2, max(0,hx1):hx2]
+            if candidate.size > 0:
+                crop = candidate
+
+        if crop is None and head_boxes:
             px1, py1, px2, py2 = [int(v) for v in person_bbox]
             for hb in head_boxes:
                 hx1, hy1, hx2, hy2 = [int(v) for v in hb]
@@ -598,13 +625,19 @@ class PPEDetector:
         if crop is None or crop.size == 0:
             return 'Unknown'
 
-        hsv   = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
-        total = hsv.shape[0] * hsv.shape[1]
+        hsv = cv2.cvtColor(crop, cv2.COLOR_BGR2HSV)
+
+        # Buang pixel blown-out (glare) dari perhitungan — total dan tiap
+        # ratio warna dihitung hanya atas pixel non-specular.
+        non_specular = cv2.inRange(
+            hsv, (0, 0, 0), (180, 255, self.HELM_SPECULAR_V_MAX))
+        total = cv2.countNonZero(non_specular)
         if total == 0:
             return 'Unknown'
 
         ratios = {
-            color: cv2.countNonZero(cv2.inRange(hsv, lo, hi)) / total
+            color: cv2.countNonZero(
+                cv2.bitwise_and(cv2.inRange(hsv, lo, hi), non_specular)) / total
             for color, (lo, hi) in self.HELM_HSV.items()
         }
         best = max(ratios, key=ratios.get)

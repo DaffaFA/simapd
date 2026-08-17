@@ -61,8 +61,9 @@ class TestAssignPpe:
       [helmet_for_b],
       ['helmet'],
     )
-    assert equipment[0] == {'helm': False, 'vest': False, 'shoes': 0}
+    assert equipment[0] == {'helm': False, 'vest': False, 'shoes': 0, 'helm_box': None}
     assert equipment[1]['helm'] == True
+    assert equipment[1]['helm_box'] == helmet_for_b
 
   def test_below_threshold_not_assigned(self, det):
     person = [0, 0, 10, 10]
