@@ -4,11 +4,26 @@ import { Loader2, Search, ChevronDown } from 'lucide-react'
 import { apiFetch } from '@/src/lib/api'
 
 export interface PersonnelOption {
-  id:          string
-  employee_id: string
-  full_name:   string
-  role:        string
-  department?: string
+  id:             string
+  employee_id:    string
+  full_name:      string
+  role:           string
+  department?:    string
+  cooldown_until?: string | null   // ISO timestamp; null/undefined = tidak cooldown
+}
+
+/** Sisa waktu cooldown dalam ms (0 kalau tidak cooldown / sudah lewat). */
+function cooldownRemainingMs(person: PersonnelOption, now: number): number {
+  if (!person.cooldown_until) return 0
+  return Math.max(0, new Date(person.cooldown_until).getTime() - now)
+}
+
+function formatCooldown(ms: number): string {
+  const totalMinutes = Math.max(1, Math.ceil(ms / 60000))
+  const h = Math.floor(totalMinutes / 60)
+  const m = totalMinutes % 60
+  if (h > 0) return `${h}j ${m}m lagi`
+  return `${m}m lagi`
 }
 
 interface Props {
@@ -46,12 +61,20 @@ export function PersonnelCombobox({
   const [open,        setOpen]        = useState(false)
   const [activeIdx,   setActiveIdx]   = useState(-1)
   const [initLoaded,  setInitLoaded]  = useState(false)
+  const [now,         setNow]         = useState(() => Date.now())
 
   const inputRef     = useRef<HTMLInputElement>(null)
   const dropdownRef  = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const visibleOptions = options.filter(p => !excluded.includes(p.id))
+
+  // ── Tick tiap 30s biar countdown cooldown di dropdown jalan ──────────────
+  useEffect(() => {
+    if (!open) return
+    const timer = setInterval(() => setNow(Date.now()), 30_000)
+    return () => clearInterval(timer)
+  }, [open])
 
   // ── Click outside menutup dropdown ────────────────────────────────────────
   useEffect(() => {
@@ -142,7 +165,8 @@ export function PersonnelCombobox({
       setActiveIdx(i => Math.max(i - 1, 0))
     } else if (e.key === 'Enter' && activeIdx >= 0 && visibleOptions.length > 0) {
       e.preventDefault()
-      selectOption(visibleOptions[activeIdx])
+      const target = visibleOptions[activeIdx]
+      if (cooldownRemainingMs(target, now) === 0) selectOption(target)
     } else if (e.key === 'Escape') {
       setOpen(false)
       inputRef.current?.blur()
@@ -150,6 +174,7 @@ export function PersonnelCombobox({
   }
 
   const selectOption = useCallback((person: PersonnelOption) => {
+    if (cooldownRemainingMs(person, Date.now()) > 0) return
     onSelect(person)
     setQuery('')
     setOptions(allOptions)
@@ -254,13 +279,17 @@ export function PersonnelCombobox({
           )}
 
           {!loading && visibleOptions.map((person, idx) => {
-            const rColor = ROLE_COLOR[person.role] ?? defaultRoleColor
+            const rColor      = ROLE_COLOR[person.role] ?? defaultRoleColor
+            const remainingMs = cooldownRemainingMs(person, now)
+            const onCooldown  = remainingMs > 0
             return (
               <button
                 key={person.id}
                 type="button"
+                disabled={onCooldown}
                 onClick={() => selectOption(person)}
                 onMouseEnter={() => setActiveIdx(idx)}
+                title={onCooldown ? `Cooldown — bisa di-link lagi dalam ${formatCooldown(remainingMs)}` : undefined}
                 style={{
                   width: '100%',
                   padding: '8px 12px',
@@ -271,10 +300,11 @@ export function PersonnelCombobox({
                   alignItems: 'center',
                   gap: 8,
                   border: 'none',
-                  cursor: 'pointer',
+                  cursor: onCooldown ? 'not-allowed' : 'pointer',
                   transition: 'background 0.1s',
-                  background: activeIdx === idx ? 'rgba(59,130,246,0.1)' : 'transparent',
-                  color: '#E2E8F0',
+                  background: activeIdx === idx && !onCooldown ? 'rgba(59,130,246,0.1)' : 'transparent',
+                  color: onCooldown ? '#64748B' : '#E2E8F0',
+                  opacity: onCooldown ? 0.6 : 1,
                 }}
               >
                 <span style={{
@@ -287,9 +317,20 @@ export function PersonnelCombobox({
                 <span style={{ flex: 1, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {person.full_name}
                 </span>
-                <span style={{ flexShrink: 0, fontSize: 11, color: '#64748B' }}>
-                  {person.employee_id}
-                </span>
+                {onCooldown ? (
+                  <span style={{
+                    flexShrink: 0, fontSize: 10, padding: '2px 6px',
+                    borderRadius: 12, fontWeight: 600,
+                    background: 'rgba(239,68,68,0.1)', color: '#EF4444',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    Cooldown {formatCooldown(remainingMs)}
+                  </span>
+                ) : (
+                  <span style={{ flexShrink: 0, fontSize: 11, color: '#64748B' }}>
+                    {person.employee_id}
+                  </span>
+                )}
               </button>
             )
           })}

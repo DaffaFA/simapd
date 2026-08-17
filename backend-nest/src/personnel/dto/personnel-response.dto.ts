@@ -13,4 +13,5 @@ export class PersonnelResponseDto {
   updated_at!: Date;
   violation_count!: number;
   active_sp!: string | null;
+  cooldown_until!: Date | null;
 }

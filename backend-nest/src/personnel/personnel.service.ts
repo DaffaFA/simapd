@@ -64,10 +64,16 @@ export class PersonnelService {
     } catch (e) {
       console.error(`Auto SP check failed for personnel ${p.id}:`, e);
     }
-    const [vCount, activeSp] = await Promise.all([
+    const [vCount, activeSp, cooldownUntil] = await Promise.all([
       this.spService.countViolationsForPersonnel(p.id),
       this.spService.getActiveSp(p.id),
+      this.spService.getCooldownUntil(p.id),
     ]);
-    return { ...p, violation_count: vCount, active_sp: activeSp?.level ?? null };
+    return {
+      ...p,
+      violation_count: vCount,
+      active_sp: activeSp?.level ?? null,
+      cooldown_until: cooldownUntil,
+    };
   }
 }

@@ -18,6 +18,7 @@ export interface Personnel {
   is_active: boolean; notes: string | null
   violation_count: number; active_sp: SPLevel | null; created_at: string
   updated_at?: string;
+  cooldown_until: string | null;
 }
 
 export interface UpdatePersonnelDto {

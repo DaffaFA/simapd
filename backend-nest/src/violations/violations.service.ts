@@ -168,6 +168,15 @@ export class ViolationsService {
         continue;
       }
 
+      // Cek cooldown 24 jam sejak link terakhir personnel ini (ke violation manapun)
+      const cooldownUntil = await this.spService.getCooldownUntil(personnelId);
+      if (cooldownUntil) {
+        errors.push(
+          `Personnel ${personnelId} masih cooldown sampai ${cooldownUntil.toISOString()}`,
+        );
+        continue;
+      }
+
       const link = this.linkRepo.create({
         violation_id: violationId,
         personnel_id: personnelId,

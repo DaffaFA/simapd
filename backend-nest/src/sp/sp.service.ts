@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import { SpRecord } from './entities/sp-record.entity';
 import { SpConfig } from './entities/sp-config.entity';
 import { Violation } from '../violations/entities/violation.entity';
+import { ViolationLink } from '../violations/entities/violation-link.entity';
 import { Personnel } from '../personnel/entities/personnel.entity';
 import { IssueSpDto } from './dto/issue-sp.dto';
 import { SpConfigUpdateDto } from './dto/sp-config-update.dto';
@@ -16,11 +17,36 @@ import { StorageService } from '../storage/storage.service';
 
 @Injectable()
 export class SpService {
+  // Berapa lama seorang personnel harus menunggu sebelum bisa di-link ke
+  // violation lain lagi setelah link terakhirnya (cegah operator menumpuk
+  // banyak violation ke orang yang sama dalam waktu singkat).
+  static readonly LINK_COOLDOWN_HOURS = 24;
+
   constructor(
     @InjectRepository(SpRecord) private spRepo: Repository<SpRecord>,
     @InjectRepository(SpConfig) private cfgRepo: Repository<SpConfig>,
     private readonly storage: StorageService,
   ) {}
+
+  /** Waktu link terakhir personnel ini ke violation manapun, atau null kalau belum pernah. */
+  async getLastLinkedAt(personnelId: string): Promise<Date | null> {
+    const link = await this.spRepo.manager
+      .createQueryBuilder(ViolationLink, 'vl')
+      .where('vl.personnel_id = :pid', { pid: personnelId })
+      .orderBy('vl.linked_at', 'DESC')
+      .getOne();
+    return link?.linked_at ?? null;
+  }
+
+  /** Kapan cooldown personnel ini berakhir, atau null kalau tidak sedang cooldown. */
+  async getCooldownUntil(personnelId: string): Promise<Date | null> {
+    const lastLinkedAt = await this.getLastLinkedAt(personnelId);
+    if (!lastLinkedAt) return null;
+    const cooldownUntil = new Date(
+      lastLinkedAt.getTime() + SpService.LINK_COOLDOWN_HOURS * 60 * 60 * 1000,
+    );
+    return cooldownUntil > new Date() ? cooldownUntil : null;
+  }
 
   async getActiveSp(personnelId: string): Promise<SpRecord | null> {
     const now = new Date();
