@@ -348,10 +348,18 @@ class PPEDetector:
         person_boxes = [bbox for bbox, _, _ in person_info]
         equipment    = self._assign_ppe(person_boxes, all_boxes, all_labels)
 
+        head_boxes = [b for b, l in zip(all_boxes, all_labels)
+                      if l in self.HEAD_CLASSES]
+
         # ── Per-person: PPE lookup + helm color ──────────────────────────────
         outputs = []
         for (bbox, track_id, conf), eq in zip(person_info, equipment):
-            helm_color = self.classify_helm_color(frame_bgr, bbox, helmet_box=eq['helm_box'])
+            px1, py1, px2, py2 = bbox
+            local_heads = [h for h in head_boxes
+                           if px1 <= (h[0]+h[2])/2 <= px2
+                           and py1 <= (h[1]+h[3])/2 <= py2]
+            helm_color = self.classify_helm_color(
+                frame_bgr, bbox, local_heads or None, helmet_box=eq['helm_box'])
             ppe        = self._check_ppe(eq)
             ppe['is_compliant'] = self._smooth_compliance(track_id, ppe['is_compliant'])
 

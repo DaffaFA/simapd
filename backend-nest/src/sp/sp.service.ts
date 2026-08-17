@@ -5,18 +5,21 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as fs from 'fs';
 import { SpRecord } from './entities/sp-record.entity';
 import { SpConfig } from './entities/sp-config.entity';
 import { Violation } from '../violations/entities/violation.entity';
 import { Personnel } from '../personnel/entities/personnel.entity';
 import { IssueSpDto } from './dto/issue-sp.dto';
 import { SpConfigUpdateDto } from './dto/sp-config-update.dto';
+import { StorageService } from '../storage/storage.service';
 
 @Injectable()
 export class SpService {
   constructor(
     @InjectRepository(SpRecord) private spRepo: Repository<SpRecord>,
     @InjectRepository(SpConfig) private cfgRepo: Repository<SpConfig>,
+    private readonly storage: StorageService,
   ) {}
 
   async getActiveSp(personnelId: string): Promise<SpRecord | null> {
@@ -185,6 +188,25 @@ export class SpService {
     return result.affected ?? 0;
   }
 
+  /** Ambil bytes foto violation dari RustFS (frame_key) atau disk lokal (frame_path, legacy). */
+  private async loadViolationFrame(v: Violation): Promise<Buffer | null> {
+    try {
+      if (v.frame_key) {
+        const stream = await this.storage.streamObject(v.frame_key);
+        if (!stream) return null;
+        const chunks: Buffer[] = [];
+        for await (const chunk of stream) chunks.push(chunk as Buffer);
+        return Buffer.concat(chunks);
+      }
+      if (v.frame_path && fs.existsSync(v.frame_path)) {
+        return fs.readFileSync(v.frame_path);
+      }
+    } catch {
+      // Foto hilang/corrupt — lampirkan tanpa foto, jangan gagalkan seluruh surat.
+    }
+    return null;
+  }
+
   async generateLetter(
     spId: string,
     issuedByUsername: string,
@@ -194,6 +216,25 @@ export class SpService {
       relations: { personnel: true },
     });
     if (!sp) throw new NotFoundException('SP tidak ditemukan');
+
+    // Semua pelanggaran yang terhitung ke SP ini (sampai saat SP diterbitkan),
+    // untuk dilampirkan sebagai bukti foto di halaman lampiran.
+    const violations = await this.spRepo.manager
+      .createQueryBuilder(Violation, 'v')
+      .leftJoin('v.links', 'vl')
+      .where('(v.personnel_id = :pid OR vl.personnel_id = :pid)', {
+        pid: sp.personnel_id,
+      })
+      .andWhere('v.detected_at <= :issuedAt', { issuedAt: sp.issued_at })
+      .orderBy('v.detected_at', 'ASC')
+      .getMany();
+
+    const violationEvidence = await Promise.all(
+      violations.map(async (v) => ({
+        violation: v,
+        image: await this.loadViolationFrame(v),
+      })),
+    );
 
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({ margin: 72, size: 'A4' });
@@ -275,7 +316,11 @@ export class SpService {
             `Bahwa berdasarkan hasil monitoring kepatuhan Alat Pelindung Diri (APD) ` +
               `menggunakan sistem SiMAPD, karyawan yang bersangkutan telah tercatat melakukan ` +
               `pelanggaran penggunaan APD sebanyak ${sp.violation_count_at_issuance} kali ` +
-              `yang melebihi batas toleransi yang ditetapkan.`,
+              `yang melebihi batas toleransi yang ditetapkan${
+                violationEvidence.length > 0
+                  ? ' (bukti foto terlampir pada halaman berikutnya)'
+                  : ''
+              }.`,
             { lineGap: 6, align: 'justify' },
           );
         doc.moveDown();
@@ -321,6 +366,91 @@ export class SpService {
             width: 180,
             align: 'center',
           });
+
+        // ── Lampiran: bukti foto pelanggaran ────────────────────────────────────
+        if (violationEvidence.length > 0) {
+          doc.addPage();
+          doc
+            .font('Helvetica-Bold')
+            .fontSize(13)
+            .text('LAMPIRAN: BUKTI PELANGGARAN', { align: 'center' });
+          doc.moveDown(1);
+
+          const margin   = 72;
+          const cols     = 2;
+          const gap      = 16;
+          const cellW    = (doc.page.width - margin * 2 - gap * (cols - 1)) / cols;
+          const imgH     = cellW * 0.62;
+          const captionH = 42;
+          const cellH    = imgH + captionH;
+
+          let col  = 0;
+          let rowY = doc.y;
+
+          violationEvidence.forEach(({ violation: v, image }, idx) => {
+            if (col === 0) {
+              if (rowY + cellH > doc.page.height - margin) {
+                doc.addPage();
+                rowY = doc.y;
+              }
+            }
+
+            const x = margin + col * (cellW + gap);
+            const y = rowY;
+
+            doc.rect(x, y, cellW, imgH).stroke('#cccccc');
+            if (image) {
+              try {
+                doc.image(image, x, y, { fit: [cellW, imgH], align: 'center', valign: 'center' });
+              } catch {
+                doc
+                  .fontSize(8)
+                  .fillColor('#999999')
+                  .text('Gagal memuat foto', x + 4, y + imgH / 2 - 4, {
+                    width: cellW - 8,
+                    align: 'center',
+                  })
+                  .fillColor('black');
+              }
+            } else {
+              doc
+                .fontSize(8)
+                .fillColor('#999999')
+                .text('Foto tidak tersedia', x + 4, y + imgH / 2 - 4, {
+                  width: cellW - 8,
+                  align: 'center',
+                })
+                .fillColor('black');
+            }
+
+            const missing = [
+              v.missing_helm  ? 'Helm'   : null,
+              v.missing_vest  ? 'Vest'   : null,
+              v.missing_shoes ? 'Sepatu' : null,
+            ].filter(Boolean).join(', ') || '-';
+            const detectedAt = new Date(v.detected_at).toLocaleString('id-ID', {
+              day: 'numeric', month: 'short', year: 'numeric',
+              hour: '2-digit', minute: '2-digit',
+            });
+
+            doc
+              .font('Helvetica-Bold')
+              .fontSize(8)
+              .text(`#${idx + 1}  ${v.violation_code}`, x, y + imgH + 4, { width: cellW });
+            doc
+              .font('Helvetica')
+              .fontSize(7)
+              .text(`${detectedAt} · Kamera ${v.camera_id}`, x, y + imgH + 16, { width: cellW })
+              .text(`Kurang APD: ${missing}`, x, y + imgH + 27, { width: cellW });
+
+            if (col === cols - 1) {
+              col  = 0;
+              rowY = y + cellH + gap;
+            } else {
+              col = 1;
+            }
+          });
+        }
 
         doc.end();
         stream.on('end', () => resolve(Buffer.concat(chunks)));

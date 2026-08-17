@@ -3,16 +3,18 @@ import { SpService } from './sp.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SpRecord } from './entities/sp-record.entity';
 import { SpConfig } from './entities/sp-config.entity';
+import { StorageService } from '../storage/storage.service';
 
 describe('SpService.computeRequiredLevel', () => {
   let service: SpService;
-  
+
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
         SpService,
         { provide: getRepositoryToken(SpRecord), useValue: {} },
         { provide: getRepositoryToken(SpConfig), useValue: {} },
+        { provide: StorageService, useValue: {} },
       ],
     }).compile();
     service = module.get<SpService>(SpService);
