@@ -7,6 +7,7 @@ export class PersonnelResponseDto {
   role!: string;
   helm_color!: string;
   department!: string;
+  email!: string | null;
   is_active!: boolean;
   notes?: string;
   created_at!: Date;

@@ -16,16 +16,16 @@ export const mockViolations: Violation[] = [
 ];
 
 export const mockPersonnel: Personnel[] = [
-  { id: 'EMP-002', employeeId: 'EMP-002', name: 'Hendra Kusuma', role: 'Safety Officer', helmColor: 'green', department: 'K3', sp: null, totalViolations: 1, violationTrend: [0,0,1,0,0,0,0], active: true },
-  { id: 'EMP-007', employeeId: 'EMP-007', name: 'Eko Prasetyo', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', sp: null, totalViolations: 2, violationTrend: [0,1,0,0,1,0,0], active: true },
-  { id: 'EMP-009', employeeId: 'EMP-009', name: 'Doni Setiawan', role: 'Supervisor', helmColor: 'white', department: 'Operasional', sp: null, totalViolations: 3, violationTrend: [1,0,0,1,0,1,0], active: true },
-  { id: 'EMP-014', employeeId: 'EMP-014', name: 'Ahmad Fauzi', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', sp: 'SP1', totalViolations: 4, violationTrend: [0,1,1,0,1,0,1], active: true },
-  { id: 'EMP-021', employeeId: 'EMP-021', name: 'Budi Santoso', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', sp: 'SP1', totalViolations: 5, violationTrend: [1,0,1,1,0,1,1], active: true },
-  { id: 'EMP-025', employeeId: 'EMP-025', name: 'Wahyu Nugroho', role: 'Pekerja', helmColor: 'yellow', department: 'Teknik', sp: null, totalViolations: 2, violationTrend: [0,0,1,0,1,0,0], active: true },
-  { id: 'EMP-033', employeeId: 'EMP-033', name: 'Slamet Widodo', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', sp: 'SP2', totalViolations: 8, violationTrend: [2,1,1,1,1,1,1], active: true },
-  { id: 'EMP-041', employeeId: 'EMP-041', name: 'Rudi Hartono', role: 'Pekerja', helmColor: 'yellow', department: 'Cargo', sp: 'SP2', totalViolations: 9, violationTrend: [1,2,1,2,1,1,1], active: true },
-  { id: 'EMP-045', employeeId: 'EMP-045', name: 'Surya Permana', role: 'Pekerja', helmColor: 'yellow', department: 'Cargo', sp: null, totalViolations: 1, violationTrend: [0,0,0,1,0,0,0], active: true },
-  { id: 'EMP-052', employeeId: 'EMP-052', name: 'Agus Trianto', role: 'Supervisor', helmColor: 'white', department: 'Operasional', sp: null, totalViolations: 0, violationTrend: [0,0,0,0,0,0,0], active: true },
+  { id: 'EMP-002', employeeId: 'EMP-002', name: 'Hendra Kusuma', role: 'Safety Officer', helmColor: 'green', department: 'K3', email: 'hendra.kusuma@simapd.local', sp: null, totalViolations: 1, violationTrend: [0,0,1,0,0,0,0], active: true },
+  { id: 'EMP-007', employeeId: 'EMP-007', name: 'Eko Prasetyo', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', email: 'eko.prasetyo@simapd.local', sp: null, totalViolations: 2, violationTrend: [0,1,0,0,1,0,0], active: true },
+  { id: 'EMP-009', employeeId: 'EMP-009', name: 'Doni Setiawan', role: 'Supervisor', helmColor: 'white', department: 'Operasional', email: 'doni.setiawan@simapd.local', sp: null, totalViolations: 3, violationTrend: [1,0,0,1,0,1,0], active: true },
+  { id: 'EMP-014', employeeId: 'EMP-014', name: 'Ahmad Fauzi', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', email: 'ahmad.fauzi@simapd.local', sp: 'SP1', totalViolations: 4, violationTrend: [0,1,1,0,1,0,1], active: true },
+  { id: 'EMP-021', employeeId: 'EMP-021', name: 'Budi Santoso', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', email: 'budi.santoso@simapd.local', sp: 'SP1', totalViolations: 5, violationTrend: [1,0,1,1,0,1,1], active: true },
+  { id: 'EMP-025', employeeId: 'EMP-025', name: 'Wahyu Nugroho', role: 'Pekerja', helmColor: 'yellow', department: 'Teknik', email: 'wahyu.nugroho@simapd.local', sp: null, totalViolations: 2, violationTrend: [0,0,1,0,1,0,0], active: true },
+  { id: 'EMP-033', employeeId: 'EMP-033', name: 'Slamet Widodo', role: 'Pekerja', helmColor: 'yellow', department: 'Bongkar Muat', email: 'slamet.widodo@simapd.local', sp: 'SP2', totalViolations: 8, violationTrend: [2,1,1,1,1,1,1], active: true },
+  { id: 'EMP-041', employeeId: 'EMP-041', name: 'Rudi Hartono', role: 'Pekerja', helmColor: 'yellow', department: 'Cargo', email: 'rudi.hartono@simapd.local', sp: 'SP2', totalViolations: 9, violationTrend: [1,2,1,2,1,1,1], active: true },
+  { id: 'EMP-045', employeeId: 'EMP-045', name: 'Surya Permana', role: 'Pekerja', helmColor: 'yellow', department: 'Cargo', email: 'surya.permana@simapd.local', sp: null, totalViolations: 1, violationTrend: [0,0,0,1,0,0,0], active: true },
+  { id: 'EMP-052', employeeId: 'EMP-052', name: 'Agus Trianto', role: 'Supervisor', helmColor: 'white', department: 'Operasional', email: 'agus.trianto@simapd.local', sp: null, totalViolations: 0, violationTrend: [0,0,0,0,0,0,0], active: true },
 ];
 
 export const mockAnalytics: AnalyticsDay[] = [

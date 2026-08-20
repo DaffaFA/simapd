@@ -5,3 +5,5 @@ backend-nest/.env
 ai-service/.env
 ai-service/captures/
 frontend/.env.local
+
+runs

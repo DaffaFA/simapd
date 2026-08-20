@@ -31,6 +31,8 @@ export default function PersonnelDetailPage() {
   const [spNotes, setSpNotes]         = useState('')
   const [issuingSp, setIssuingSp]     = useState(false)
   const [issueSpError, setIssueSpError] = useState<string | null>(null)
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null)
+  const [emailFeedback, setEmailFeedback]   = useState<{ id: string; ok: boolean; message: string } | null>(null)
 
   const canEdit = hasRole(user?.role, EDITOR_ROLES)
 
@@ -65,6 +67,7 @@ export default function PersonnelDetailPage() {
           role: p.role,
           helm_color: p.helm_color,
           department: p.department,
+          email: p.email ?? undefined,
           is_active: p.is_active,
         })
       })
@@ -119,6 +122,20 @@ export default function PersonnelDetailPage() {
       URL.revokeObjectURL(a.href)
     } catch (e) {
       alert('Gagal mengunduh surat peringatan')
+    }
+  }
+
+  const sendSpLetterEmail = async (spId: string) => {
+    setSendingEmailId(spId)
+    setEmailFeedback(null)
+    try {
+      const res = await spApi.sendEmail(spId)
+      setEmailFeedback({ id: spId, ok: true, message: res.message })
+    } catch (e: any) {
+      setEmailFeedback({ id: spId, ok: false, message: e.message ?? 'Gagal mengirim email' })
+    } finally {
+      setSendingEmailId(null)
+      setTimeout(() => setEmailFeedback(f => (f?.id === spId ? null : f)), 5000)
     }
   }
 
@@ -184,6 +201,7 @@ export default function PersonnelDetailPage() {
             { label: 'Warna Helm', field: 'helm_color', type: 'select',
               options: ['Kuning', 'Putih', 'Hijau'] },
             { label: 'Departemen', field: 'department', type: 'text' },
+            { label: 'Email', field: 'email', type: 'text' },
           ].map(({ label, field, type, options }) => (
             <div key={field}>
               <label className="text-sm text-gray-400">{label}</label>
@@ -265,32 +283,46 @@ export default function PersonnelDetailPage() {
         ) : (
           <div className="space-y-2">
             {spRecords.map(sp => (
-              <div key={sp.id}
-                className="flex items-center justify-between p-3 border border-[#1E2D3D] rounded-lg">
-                <div>
-                  <span className={`text-sm font-medium px-2 py-0.5 rounded ${spColor[sp.level]}`}>
-                    {sp.level}
-                  </span>
-                  <span className="ml-2 text-sm text-gray-300">{sp.sp_number}</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right text-xs text-gray-400">
-                    <div>Diterbitkan: {new Date(sp.issued_at).toLocaleDateString('id-ID')}</div>
-                    <div>Berlaku s/d: {new Date(sp.expires_at).toLocaleDateString('id-ID')}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-1 rounded ${sp.is_active ? 'bg-red-500/20 text-red-500' : 'bg-gray-800 text-gray-400'}`}>
-                      {sp.is_active ? 'Aktif' : 'Selesai'}
+              <div key={sp.id} className="border border-[#1E2D3D] rounded-lg p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className={`text-sm font-medium px-2 py-0.5 rounded ${spColor[sp.level]}`}>
+                      {sp.level}
                     </span>
-                    <button
-                      onClick={() => downloadSpLetter(sp.id, sp.sp_number)}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1E2D3D] text-gray-300 border border-[#2D3F54] rounded-lg hover:bg-[#2A3F5A] transition-colors"
-                      title="Download Surat Peringatan"
-                    >
-                      📄 PDF
-                    </button>
+                    <span className="ml-2 text-sm text-gray-300">{sp.sp_number}</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right text-xs text-gray-400">
+                      <div>Diterbitkan: {new Date(sp.issued_at).toLocaleDateString('id-ID')}</div>
+                      <div>Berlaku s/d: {new Date(sp.expires_at).toLocaleDateString('id-ID')}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-1 rounded ${sp.is_active ? 'bg-red-500/20 text-red-500' : 'bg-gray-800 text-gray-400'}`}>
+                        {sp.is_active ? 'Aktif' : 'Selesai'}
+                      </span>
+                      <button
+                        onClick={() => downloadSpLetter(sp.id, sp.sp_number)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1E2D3D] text-gray-300 border border-[#2D3F54] rounded-lg hover:bg-[#2A3F5A] transition-colors"
+                        title="Download Surat Peringatan"
+                      >
+                        📄 PDF
+                      </button>
+                      <button
+                        onClick={() => sendSpLetterEmail(sp.id)}
+                        disabled={sendingEmailId === sp.id || !personnel.email}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#1E2D3D] text-gray-300 border border-[#2D3F54] rounded-lg hover:bg-[#2A3F5A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={personnel.email ? 'Kirim Surat Peringatan via Email' : 'Karyawan belum memiliki alamat email'}
+                      >
+                        {sendingEmailId === sp.id ? '⏳ Mengirim...' : '✉️ Email'}
+                      </button>
+                    </div>
                   </div>
                 </div>
+                {emailFeedback?.id === sp.id && (
+                  <p className={`mt-2 text-xs text-right ${emailFeedback.ok ? 'text-green-400' : 'text-red-400'}`}>
+                    {emailFeedback.ok ? '✓' : '⚠️'} {emailFeedback.message}
+                  </p>
+                )}
               </div>
             ))}
           </div>

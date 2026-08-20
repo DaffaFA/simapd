@@ -185,6 +185,7 @@ function PersonnelModal({ initialData, onClose, onSaved }: { initialData?: Perso
   const [fullName, setFullName] = useState(initialData?.name || '');
   const [employeeId, setEmployeeId] = useState(initialData?.employeeId || '');
   const [department, setDepartment] = useState(initialData?.department || '');
+  const [email, setEmail] = useState(initialData?.email || '');
   const [role, setRole] = useState(initialData?.role || 'Pekerja');
   const [helmColor, setHelmColor] = useState(initialData?.helmColor || 'Kuning');
   const [saving, setSaving] = useState(false);
@@ -203,6 +204,7 @@ function PersonnelModal({ initialData, onClose, onSaved }: { initialData?: Perso
           full_name: fullName,
           employee_id: employeeId,
           department: department || 'Umum',
+          email: email.trim() || undefined,
           role: role as 'Pekerja' | 'Supervisor' | 'Safety Officer',
           helm_color: helmColor as 'Kuning' | 'Putih' | 'Hijau',
         });
@@ -211,6 +213,7 @@ function PersonnelModal({ initialData, onClose, onSaved }: { initialData?: Perso
           full_name: fullName,
           employee_id: employeeId,
           department: department || 'Umum',
+          email: email.trim() || undefined,
           role: role as 'Pekerja' | 'Supervisor' | 'Safety Officer',
           helm_color: helmColor as 'Kuning' | 'Putih' | 'Hijau',
         });
@@ -264,6 +267,15 @@ function PersonnelModal({ initialData, onClose, onSaved }: { initialData?: Perso
             <input
               value={department} onChange={e => setDepartment(e.target.value)}
               placeholder="Bongkar Muat"
+              style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none' }}
+            />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Email</label>
+            <input
+              type="email"
+              value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="nama@perusahaan.com"
               style={{ background: '#0D1117', border: '1px solid #1E2D3D', borderRadius: 6, padding: '8px 12px', fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#E2E8F0', outline: 'none' }}
             />
           </div>

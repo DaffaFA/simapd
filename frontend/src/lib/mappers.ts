@@ -43,6 +43,7 @@ export function mapPersonnel(p: ApiPersonnel): UIPersonnel {
     role: p.role,
     helmColor: helmColorMap[p.helm_color] ?? 'yellow',
     department: p.department,
+    email: p.email ?? null,
     sp: p.active_sp ?? null,
     totalViolations: p.violation_count ?? 0,
     violationTrend: [],

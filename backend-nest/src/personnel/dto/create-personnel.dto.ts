@@ -1,9 +1,13 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsEmail } from 'class-validator';
 
 export class CreatePersonnelDto {
   @IsString()
   @IsNotEmpty()
   employee_id!: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
 
   @IsString()
   @IsNotEmpty()

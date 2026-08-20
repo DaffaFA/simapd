@@ -13,6 +13,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { StreamModule } from './stream/stream.module';
 import { StorageModule } from './storage/storage.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { MailModule } from './mail/mail.module';
 
 import { SeedService } from './common/seed.service';
 import { User } from './auth/entities/user.entity';
@@ -49,6 +50,7 @@ import { Personnel } from './personnel/entities/personnel.entity';
     StreamModule,
     StorageModule,
     NotificationsModule,
+    MailModule,
   ],
   providers: [SeedService],
 })

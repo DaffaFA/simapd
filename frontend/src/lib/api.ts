@@ -78,6 +78,8 @@ export const spApi = {
   getActive: (p?: Record<string, any>) =>
     apiFetch<PaginatedResponse<SpRecord>>(`/sp/active?${new URLSearchParams(p??{})}`),
   downloadLetter: (spId: string) => apiDownload(`/sp/${spId}/letter`),
+  sendEmail: (spId: string) =>
+    apiFetch<{ message: string }>(`/sp/${spId}/send-email`, { method: 'POST' }),
 }
 
 export const analyticsApi = {

@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { SpRecord } from './entities/sp-record.entity';
 import { SpConfig } from './entities/sp-config.entity';
 import { StorageService } from '../storage/storage.service';
+import { MailService } from '../mail/mail.service';
 
 describe('SpService.computeRequiredLevel', () => {
   let service: SpService;
@@ -15,6 +16,7 @@ describe('SpService.computeRequiredLevel', () => {
         { provide: getRepositoryToken(SpRecord), useValue: {} },
         { provide: getRepositoryToken(SpConfig), useValue: {} },
         { provide: StorageService, useValue: {} },
+        { provide: MailService, useValue: {} },
       ],
     }).compile();
     service = module.get<SpService>(SpService);

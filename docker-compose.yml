@@ -85,6 +85,12 @@ services:
       RUSTFS_ACCESS_KEY: QRSSaQVq8Rue4AnjHXJT
       RUSTFS_SECRET_KEY: 4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme
       RUSTFS_BUCKET: simapd-frames
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_SECURE: false
+      SMTP_USER: daffadzibanf@gmail.com
+      SMTP_PASSWORD: zbydyedhmwjcsigd
+      SMTP_FROM: SiMAPD <no-reply@simapd.local>
     depends_on:
       postgres: { condition: service_healthy }
       redis:    { condition: service_healthy }
@@ -128,6 +134,8 @@ services:
     restart: unless-stopped
     env_file: ./ai-service/.env
     environment:
+      - PYTHONUNBUFFERED=1   # stdout di-pipe (bukan TTY) -> Python block-buffer print() secara default,
+                             # bikin logs kelihatan "hang" padahal cuma nunggu buffer flush.
       - REDIS_URL=redis://redis:6379
       - YOLO_MODEL_PATH=models/yolo9m.pt
       - USE_SAHI=false

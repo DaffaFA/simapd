@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +15,7 @@ import { Personnel } from '../personnel/entities/personnel.entity';
 import { IssueSpDto } from './dto/issue-sp.dto';
 import { SpConfigUpdateDto } from './dto/sp-config-update.dto';
 import { StorageService } from '../storage/storage.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class SpService {
@@ -26,6 +28,7 @@ export class SpService {
     @InjectRepository(SpRecord) private spRepo: Repository<SpRecord>,
     @InjectRepository(SpConfig) private cfgRepo: Repository<SpConfig>,
     private readonly storage: StorageService,
+    private readonly mail: MailService,
   ) {}
 
   /** Waktu link terakhir personnel ini ke violation manapun, atau null kalau belum pernah. */
@@ -485,5 +488,48 @@ export class SpService {
         reject(e);
       }
     });
+  }
+
+  async sendLetterByEmail(
+    spId: string,
+    issuedByUsername: string,
+  ): Promise<{ message: string }> {
+    const sp = await this.spRepo.findOne({
+      where: { id: spId },
+      relations: { personnel: true },
+    });
+    if (!sp) throw new NotFoundException('SP tidak ditemukan');
+    if (!sp.personnel?.email) {
+      throw new BadRequestException(
+        'Karyawan ini belum memiliki alamat email',
+      );
+    }
+
+    const pdf = await this.generateLetter(spId, issuedByUsername);
+    const issuedAt = new Date(sp.issued_at).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+
+    await this.mail.sendMail({
+      to: sp.personnel.email,
+      subject: `Surat Peringatan ${sp.level} — ${sp.sp_number}`,
+      text:
+        `Yth. ${sp.personnel.full_name},\n\n` +
+        `Terlampir Surat Peringatan ${sp.level} (${sp.sp_number}) yang diterbitkan ` +
+        `pada ${issuedAt} berdasarkan hasil monitoring kepatuhan APD sistem SiMAPD.\n\n` +
+        `Mohon segera meninjau dan mematuhi seluruh peraturan keselamatan kerja yang berlaku.\n\n` +
+        `Hormat kami,\n${issuedByUsername}\nSafety Officer`,
+      attachments: [
+        {
+          filename: `${sp.sp_number.replace(/\//g, '-')}.pdf`,
+          content: pdf,
+          contentType: 'application/pdf',
+        },
+      ],
+    });
+
+    return { message: `Surat peringatan berhasil dikirim ke ${sp.personnel.email}` };
   }
 }

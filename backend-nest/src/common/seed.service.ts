@@ -92,6 +92,7 @@ export class SeedService implements OnApplicationBootstrap {
           role: 'Pekerja',
           helm_color: 'Kuning',
           department: 'Operasional',
+          email: 'budi.santoso@simapd.local',
         },
         {
           employee_id: 'S-001',
@@ -99,6 +100,7 @@ export class SeedService implements OnApplicationBootstrap {
           role: 'Supervisor',
           helm_color: 'Putih',
           department: 'Manajemen',
+          email: 'joko.widodo@simapd.local',
         },
         {
           employee_id: 'SO-001',
@@ -106,6 +108,7 @@ export class SeedService implements OnApplicationBootstrap {
           role: 'Safety Officer',
           helm_color: 'Hijau',
           department: 'HSE',
+          email: 'andi.maulana@simapd.local',
         },
       ]);
     }

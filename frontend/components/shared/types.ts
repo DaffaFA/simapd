@@ -26,6 +26,7 @@ export interface Personnel {
   role: string;
   helmColor: HelmColor;
   department: string;
+  email: string | null;
   sp: SPLevel;
   totalViolations: number;
   violationTrend: number[];

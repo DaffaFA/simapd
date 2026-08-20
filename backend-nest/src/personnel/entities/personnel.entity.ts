@@ -21,6 +21,9 @@ export class Personnel extends BaseEntity {
   @Column()
   department: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  email: string | null;
+
   @Column({ default: true })
   is_active: boolean;
 

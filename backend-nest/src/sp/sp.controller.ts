@@ -72,4 +72,13 @@ export class SpController {
     res.setHeader('Content-Disposition', `attachment; filename="surat_peringatan_${id}.pdf"`);
     res.send(pdf);
   }
+
+  @Post(':id/send-email')
+  @HttpCode(200)
+  async sendSpLetterEmail(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+  ) {
+    return this.spService.sendLetterByEmail(id, user.username);
+  }
 }

@@ -258,7 +258,11 @@ class PPEDetector:
 
         self.device = device
         self.sahi_model = AutoDetectionModel.from_pretrained(
-            model_type           = 'ultralytics',
+            # sahi==0.11.19 masih pakai key lama 'yolov8' untuk model_type ini
+            # (di-rename ke 'ultralytics' baru di rilis sahi yang lebih baru).
+            # Class-nya cuma wrapper generik atas ultralytics.YOLO(), jadi
+            # tetap jalan untuk model non-v8 seperti yolo9m.pt ini.
+            model_type           = 'yolov8',
             model_path           = self.model_path,
             confidence_threshold = self.confidence,
             device               = device,

@@ -15,6 +15,7 @@ export interface TokenResponse { access_token: string; token_type: string; user:
 export interface Personnel {
   id: string; employee_id: string; full_name: string
   role: PersonRole; helm_color: HelmColor; department: string
+  email: string | null;
   is_active: boolean; notes: string | null
   violation_count: number; active_sp: SPLevel | null; created_at: string
   updated_at?: string;
@@ -26,6 +27,7 @@ export interface UpdatePersonnelDto {
   role?:        string
   helm_color?:  string
   department?:  string
+  email?:       string
   is_active?:   boolean
 }
 
