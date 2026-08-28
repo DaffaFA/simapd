@@ -201,13 +201,14 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: http://localhost/api/v1
-        NEXT_PUBLIC_WS_URL:  ws://localhost
+      # NEXT_PUBLIC_API_URL / NEXT_PUBLIC_WS_URL sengaja TIDAK di-set: keduanya
+      # di-inline oleh Next.js saat build, jadi hardcode "localhost" di sini
+      # akan ikut terbawa ke browser device lain (mis. akses via Tailscale/LAN
+      # IP) dan bikin login/WS nyasar ke localhost milik device itu sendiri.
+      # Biarkan kosong supaya frontend/src/lib/api.ts dan useWebSocket.ts
+      # fallback ke window.location saat runtime (nginx sudah proxy /api,
+      # /stream, dan / di origin yang sama).
     restart: unless-stopped
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost/api/v1
-      NEXT_PUBLIC_WS_URL:  ws://localhost
     depends_on:
       backend: { condition: service_healthy }
     # Port TIDAK di-expose ke host — akses via NGINX

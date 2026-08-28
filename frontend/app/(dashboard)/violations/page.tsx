@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { apiFetch, rejectViolation, confirmViolation } from '@/src/lib/api'
+import { apiFetch, rejectViolation, confirmViolation, getViolationFrameUrl } from '@/src/lib/api'
 import { groupViolationsByBatch, formatBatchTime, type RawViolation } from '@/src/lib/group-violations'
 import { LinkPersonnelPanel }    from '@/components/violations/LinkPersonnelPanel'
 import { ViolationFramePreview } from '@/components/violations/ViolationFramePreview'
@@ -277,9 +277,8 @@ export default function ViolationsPage() {
 
   // ── Download frame ────────────────────────────────────────────────────────────
   const downloadFrame = async (violationId: string) => {
-    const base  = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'
     const token = localStorage.getItem('simapd_token') ?? ''
-    const res   = await fetch(`${base}/violations/${violationId}/frame`, {
+    const res   = await fetch(getViolationFrameUrl(violationId), {
       headers: { Authorization: `Bearer ${token}` },
     })
     if (!res.ok) return

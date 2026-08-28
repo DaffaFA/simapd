@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { fetchViolationFrame } from '@/src/lib/api'
 
 interface Props {
   violationId: string
@@ -21,20 +22,10 @@ export function ViolationFramePreview({ violationId, className }: Props) {
     setError(false)
     setSrc(null)
 
-    const base  = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'
-    const token = typeof window !== 'undefined'
-      ? localStorage.getItem('simapd_token') ?? ''
-      : ''
-
-    fetch(`${base}/violations/${violationId}/frame`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('no frame')
-        return res.blob()
-      })
-      .then(blob => {
-        objectUrl = URL.createObjectURL(blob)
+    fetchViolationFrame(violationId)
+      .then(url => {
+        if (!url) throw new Error('no frame')
+        objectUrl = url
         setSrc(objectUrl)
       })
       .catch(() => setError(true))

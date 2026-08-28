@@ -1,6 +1,15 @@
 import { TokenResponse, User, Personnel, PaginatedResponse, Violation, SpRecord, SPLevel } from '../types/simapd';
 
-const BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api/v1'
+function resolveBase(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL
+  if (envUrl) return envUrl
+  // Fallback: derive dari window.location saat runtime, supaya akses via
+  // LAN/Tailscale IP tidak nyasar ke localhost milik device lain.
+  if (typeof window === 'undefined') return 'http://localhost:3001/api/v1'
+  return `${window.location.origin}/api/v1`
+}
+
+const BASE = resolveBase()
 
 class ApiError extends Error { constructor(public status: number, public detail: string) { super(detail) } }
 
