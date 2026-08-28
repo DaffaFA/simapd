@@ -2,15 +2,21 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Settings, Camera } from 'lucide-react'
+import { Settings, Camera, Users } from 'lucide-react'
+import { useAuth } from '@/src/lib/AuthContext'
+import { hasRole } from '@/src/lib/roles'
 
 const TABS = [
   { href: '/settings/sp-config', label: 'Konfigurasi SP', Icon: Settings },
   { href: '/settings/cameras',   label: 'Manajemen Kamera', Icon: Camera },
+  { href: '/settings/akun',      label: 'Manajemen Akun', Icon: Users, adminOnly: true },
 ]
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const path = usePathname()
+  const { user } = useAuth()
+  const isAdmin = hasRole(user?.role, ['admin'])
+  const tabs = TABS.filter(t => !t.adminOnly || isAdmin)
 
   return (
     <div style={{ display: 'flex', gap: 24 }}>
@@ -20,7 +26,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
         display: 'flex', flexDirection: 'column', gap: 2,
         paddingTop: 4,
       }}>
-        {TABS.map(tab => {
+        {tabs.map(tab => {
           const isActive = path === tab.href
           return (
             <Link key={tab.href} href={tab.href}

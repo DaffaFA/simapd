@@ -1,0 +1,43 @@
+[
+  {
+    "track_id": 2,
+    "helm_color": "Putih",
+    "role_label": "Supervisor",
+    "missing_helm": true,
+    "missing_vest": true,
+    "missing_shoes": false,
+    "missing_ppe": [
+      "helm",
+      "vest"
+    ],
+    "is_compliant": false,
+    "confidence": 0.9378948211669922,
+    "bbox": [
+      1874,
+      1273,
+      2499,
+      2399
+    ],
+    "camera_id": "inference-batch"
+  },
+  {
+    "track_id": 3,
+    "helm_color": "Putih",
+    "role_label": "Supervisor",
+    "missing_helm": false,
+    "missing_vest": true,
+    "missing_shoes": false,
+    "missing_ppe": [
+      "vest"
+    ],
+    "is_compliant": false,
+    "confidence": 0.9097996950149536,
+    "bbox": [
+      2870,
+      1080,
+      3252,
+      2164
+    ],
+    "camera_id": "inference-batch"
+  }
+]

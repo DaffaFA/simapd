@@ -6,6 +6,7 @@ import configuration from './config/configuration';
 
 import { RedisModule } from './redis/redis.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 import { PersonnelModule } from './personnel/personnel.module';
 import { ViolationsModule } from './violations/violations.module';
 import { SpModule } from './sp/sp.module';
@@ -43,6 +44,7 @@ import { Personnel } from './personnel/entities/personnel.entity';
     ScheduleModule.forRoot(),
     RedisModule,
     AuthModule,
+    UsersModule,
     PersonnelModule,
     ViolationsModule,
     SpModule,

@@ -6,7 +6,7 @@ import { Download } from 'lucide-react';
 import { HelmDot } from '@/components/shared/HelmDot';
 import { analyticsApi } from '@/src/lib/api';
 
-interface TrendDay { date: string; total_violations: number; compliance_rate: number }
+interface TrendDay { date: string; total_violations: number; compliance_rate: number; granularity?: 'day' | 'week' | 'month' }
 interface ByType { helm: number; vest: number; shoes: number; helm_pct: number; vest_pct: number; shoes_pct: number }
 interface ByShift { pagi: number; siang: number; malam: number }
 interface Offender { personnel_id: string; full_name: string; employee_id: string; role: string; violation_count: number }
@@ -98,11 +98,19 @@ export default function Analytics() {
   }, [period, dateFrom, dateTo]);
 
   const trend = data?.trend ?? [];
+  const granularity = trend[0]?.granularity ?? 'day';
+  const bucketLabel = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00Z');
+    if (granularity === 'month') return d.toLocaleDateString('id-ID', { month: 'short', year: '2-digit', timeZone: 'UTC' });
+    if (granularity === 'week') return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', timeZone: 'UTC' });
+    return dateStr.slice(5); // MM-DD
+  };
   const chartData = trend.map(t => ({
-    day: t.date.slice(5), // MM-DD
+    day: bucketLabel(t.date),
     compliance: t.compliance_rate,
     violations: t.total_violations,
   }));
+  const granularityLabel = { day: 'Harian', week: 'Mingguan', month: 'Bulanan' }[granularity];
 
   const byType = data?.byType;
   const apdBreakdown = byType ? [
@@ -201,7 +209,7 @@ export default function Analytics() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
           <div>
             <p style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 4px' }}>
-              Tren Kepatuhan APD
+              Tren Kepatuhan APD {trend.length > 0 && <span style={{ color: '#475569' }}>· {granularityLabel}</span>}
             </p>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
               <span style={{ fontSize: 32, fontFamily: 'JetBrains Mono, monospace', fontWeight: 500, color: '#22C55E', lineHeight: 1 }}>{avgCompliance}%</span>

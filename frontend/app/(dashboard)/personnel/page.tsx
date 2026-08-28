@@ -181,13 +181,21 @@ function PersonnelRow({ p, canEdit, onEdit }: { p: Personnel; canEdit: boolean; 
   );
 }
 
+const HELM_COLOR_TO_INDONESIAN: Record<string, string> = {
+  yellow: 'Kuning',
+  white: 'Putih',
+  green: 'Hijau',
+};
+
 function PersonnelModal({ initialData, onClose, onSaved }: { initialData?: Personnel | null; onClose: () => void; onSaved: () => void }) {
   const [fullName, setFullName] = useState(initialData?.name || '');
   const [employeeId, setEmployeeId] = useState(initialData?.employeeId || '');
   const [department, setDepartment] = useState(initialData?.department || '');
   const [email, setEmail] = useState(initialData?.email || '');
   const [role, setRole] = useState(initialData?.role || 'Pekerja');
-  const [helmColor, setHelmColor] = useState(initialData?.helmColor || 'Kuning');
+  const [helmColor, setHelmColor] = useState(
+    (initialData?.helmColor && HELM_COLOR_TO_INDONESIAN[initialData.helmColor]) || 'Kuning'
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 

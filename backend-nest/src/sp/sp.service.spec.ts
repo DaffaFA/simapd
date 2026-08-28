@@ -3,6 +3,7 @@ import { SpService } from './sp.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SpRecord } from './entities/sp-record.entity';
 import { SpConfig } from './entities/sp-config.entity';
+import { User } from '../auth/entities/user.entity';
 import { StorageService } from '../storage/storage.service';
 import { MailService } from '../mail/mail.service';
 
@@ -15,6 +16,7 @@ describe('SpService.computeRequiredLevel', () => {
         SpService,
         { provide: getRepositoryToken(SpRecord), useValue: {} },
         { provide: getRepositoryToken(SpConfig), useValue: {} },
+        { provide: getRepositoryToken(User), useValue: {} },
         { provide: StorageService, useValue: {} },
         { provide: MailService, useValue: {} },
       ],

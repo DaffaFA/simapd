@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 import { Camera } from './entities/camera.entity';
+import { DetectionStat } from '../analytics/entities/detection-stat.entity';
 import { ViolationsModule } from '../violations/violations.module';
 import { StreamGateway } from './stream.gateway';
 import { StreamService } from './stream.service';
@@ -11,7 +12,7 @@ import { StreamController } from './stream.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Camera]),
+    TypeOrmModule.forFeature([Camera, DetectionStat]),
     ViolationsModule,
     // JwtModule perlu di-re-register di sini untuk StreamGateway
     JwtModule.registerAsync({

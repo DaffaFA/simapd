@@ -1,16 +1,38 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { fetchViolationFrame } from '@/src/lib/api'
 
 interface Props {
   violationId: string
   hasFrame: boolean
-  frameUrl?: string
   size?: 'thumb' | 'full'
   className?: string
 }
 
-export function ViolationFrame({ violationId, hasFrame, frameUrl, size = 'full', className }: Props) {
+export function ViolationFrame({ violationId, hasFrame, size = 'full', className }: Props) {
   const [error, setError] = useState(false)
+  const [frameUrl, setFrameUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!hasFrame) return
+
+    let objectUrl: string | null = null
+    let cancelled = false
+    setError(false)
+    setFrameUrl(null)
+
+    fetchViolationFrame(violationId).then(url => {
+      if (cancelled) return
+      if (!url) { setError(true); return }
+      objectUrl = url
+      setFrameUrl(url)
+    })
+
+    return () => {
+      cancelled = true
+      if (objectUrl) URL.revokeObjectURL(objectUrl)
+    }
+  }, [violationId, hasFrame])
 
   const containerStyle: React.CSSProperties = {
     display: 'flex',
@@ -24,18 +46,18 @@ export function ViolationFrame({ violationId, hasFrame, frameUrl, size = 'full',
     height: size === 'thumb' ? 40 : 192,
   }
 
-  if (!hasFrame || !frameUrl) {
-    return (
-      <div style={{ ...containerStyle, background: '#0D1117', color: '#64748B' }} className={className}>
-        {size === 'thumb' ? '-' : 'Frame tidak tersedia'}
-      </div>
-    )
-  }
-
   if (error) {
     return (
       <div style={{ ...containerStyle, background: 'rgba(239,68,68,0.1)', color: '#EF4444' }} className={className}>
         {size === 'thumb' ? '!' : 'Gagal memuat frame'}
+      </div>
+    )
+  }
+
+  if (!hasFrame || !frameUrl) {
+    return (
+      <div style={{ ...containerStyle, background: '#0D1117', color: '#64748B' }} className={className}>
+        {size === 'thumb' ? '-' : 'Frame tidak tersedia'}
       </div>
     )
   }

@@ -12,6 +12,7 @@ import { SpConfig } from './entities/sp-config.entity';
 import { Violation } from '../violations/entities/violation.entity';
 import { ViolationLink } from '../violations/entities/violation-link.entity';
 import { Personnel } from '../personnel/entities/personnel.entity';
+import { User } from '../auth/entities/user.entity';
 import { IssueSpDto } from './dto/issue-sp.dto';
 import { SpConfigUpdateDto } from './dto/sp-config-update.dto';
 import { StorageService } from '../storage/storage.service';
@@ -27,9 +28,21 @@ export class SpService {
   constructor(
     @InjectRepository(SpRecord) private spRepo: Repository<SpRecord>,
     @InjectRepository(SpConfig) private cfgRepo: Repository<SpConfig>,
+    @InjectRepository(User) private userRepo: Repository<User>,
     private readonly storage: StorageService,
     private readonly mail: MailService,
   ) {}
+
+  /** Decode data URI base64 ("data:image/png;base64,...") jadi Buffer, atau null kalau tidak valid. */
+  private decodeSignature(signature: string | null | undefined): Buffer | null {
+    if (!signature) return null;
+    try {
+      const base64 = signature.includes(',') ? signature.split(',')[1] : signature;
+      return Buffer.from(base64, 'base64');
+    } catch {
+      return null;
+    }
+  }
 
   /** Waktu link terakhir personnel ini ke violation manapun, atau null kalau belum pernah. */
   async getLastLinkedAt(personnelId: string): Promise<Date | null> {
@@ -265,6 +278,11 @@ export class SpService {
       })),
     );
 
+    const issuer = await this.userRepo.findOne({
+      where: { username: issuedByUsername },
+    });
+    const signatureImage = this.decodeSignature(issuer?.signature);
+
     const PDFDocument = require('pdfkit');
     const doc = new PDFDocument({ margin: 72, size: 'A4' });
 
@@ -373,19 +391,33 @@ export class SpService {
         doc.moveDown(2);
 
         // ── Tanda tangan ─────────────────────────────────────────────────────────
-        const signX = doc.page.width - 72 - 180;
+        const signX     = doc.page.width - 72 - 180;
+        const signWidth = 180;
         doc
           .font('Helvetica')
           .fontSize(11)
-          .text(`Hormat kami,`, signX, doc.y, { width: 180, align: 'center' });
-        doc.moveDown(4);
+          .text(`Hormat kami,`, signX, doc.y, { width: signWidth, align: 'center' });
+
+        const signBlockTop = doc.y + 4;
+        const signImgHeight = 60;
+        if (signatureImage) {
+          try {
+            doc.image(signatureImage, signX + (signWidth - 140) / 2, signBlockTop, {
+              fit: [140, signImgHeight],
+              align: 'center',
+            });
+          } catch {
+            // Tanda tangan tersimpan tidak valid sebagai gambar — lanjut tanpa gambar.
+          }
+        }
+
+        const lineY = signBlockTop + signImgHeight + 6;
         doc
-          .moveTo(signX, doc.y)
-          .lineTo(signX + 180, doc.y)
+          .moveTo(signX, lineY)
+          .lineTo(signX + signWidth, lineY)
           .stroke();
-        doc.moveDown(0.3);
-        doc.font('Helvetica-Bold').text(issuedByUsername, signX, doc.y, {
-          width: 180,
+        doc.font('Helvetica-Bold').fontSize(11).text(issuedByUsername, signX, lineY + 4, {
+          width: signWidth,
           align: 'center',
         });
         doc

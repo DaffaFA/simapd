@@ -16,7 +16,7 @@ export class AnalyticsController {
   async dashboard(@Query() q: AnalyticsQueryDto) {
     const [summary, trend, byType, byShift, offenders] = await Promise.all([
       this.service.getDashboardSummary(),
-      this.service.getDailyTrend(q.days),
+      this.service.getTrend(q.date_from, q.date_to, q.days),
       this.service.getByType(q.date_from, q.date_to),
       this.service.getByShift(q.date_from, q.date_to),
       this.service.getTopOffenders(q.limit, q.date_from, q.date_to),

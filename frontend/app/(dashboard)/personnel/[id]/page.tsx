@@ -370,7 +370,6 @@ export default function PersonnelDetailPage() {
                         <ViolationFrame
                           violationId={v.id}
                           hasFrame={true}
-                          frameUrl={v.frame_path}
                           size="thumb"
                           className="w-10 h-10 object-cover rounded cursor-pointer border border-[#1E2D3D]"
                         />

@@ -3,15 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, MoreThanOrEqual, Not, IsNull } from 'typeorm';
 import { Violation } from '../violations/entities/violation.entity';
 import { SpRecord } from '../sp/entities/sp-record.entity';
+import { DetectionStat } from './entities/detection-stat.entity';
 import { AnalyticsQueryDto } from './dto/analytics-query.dto';
 import * as PDFDocument from 'pdfkit';
 import { PassThrough } from 'stream';
+
+type Granularity = 'day' | 'week' | 'month';
 
 @Injectable()
 export class AnalyticsService {
   constructor(
     @InjectRepository(Violation) private violationRepo: Repository<Violation>,
     @InjectRepository(SpRecord) private spRepo: Repository<SpRecord>,
+    @InjectRepository(DetectionStat) private statsRepo: Repository<DetectionStat>,
   ) {}
 
   async getDashboardSummary(date?: string) {
@@ -21,7 +25,7 @@ export class AnalyticsService {
     const end = new Date(target);
     end.setHours(23, 59, 59, 999);
 
-    const [today, linkedToday, week, sps] = await Promise.all([
+    const [today, linkedToday, week, sps, todayStats] = await Promise.all([
       this.violationRepo.count({ where: { detected_at: Between(start, end) } }),
       this.violationRepo.count({
         where: {
@@ -35,13 +39,14 @@ export class AnalyticsService {
         },
       }),
       this.spRepo.find({ where: { is_active: true } }),
+      this._sumStats(this._utcDateKey(target), this._utcDateKey(target)),
     ]);
 
     const now = new Date();
     const active = sps.filter((s) => s.expires_at > now);
 
     return {
-      compliance_rate: this._estimateRate(today),
+      compliance_rate: this._realRate(todayStats.total, todayStats.violations, today),
       total_violations_today: today,
       total_violations_week: week,
       linked_count: linkedToday,
@@ -53,34 +58,142 @@ export class AnalyticsService {
     };
   }
 
-  private _estimateRate(violations: number): number {
-    // MVP: asumsi total detections per hari = violations * 4 (minimum 50)
-    // Ganti dengan counter aktual jika tersedia
+  private _utcDateKey(d: Date): string {
+    return d.toISOString().slice(0, 10);
+  }
+
+  /** Jumlah total & violation dari detection_stats (data riil) untuk rentang tanggal (inklusif, UTC). */
+  private async _sumStats(dateFrom: string, dateTo: string): Promise<{ total: number; violations: number }> {
+    const row = await this.statsRepo
+      .createQueryBuilder('ds')
+      .select('COALESCE(SUM(ds.total_count), 0)', 'total')
+      .addSelect('COALESCE(SUM(ds.violation_count), 0)', 'violations')
+      .where('ds.date BETWEEN :df AND :dt', { df: dateFrom, dt: dateTo })
+      .getRawOne<{ total: string; violations: string }>();
+    return { total: parseInt(row?.total ?? '0', 10), violations: parseInt(row?.violations ?? '0', 10) };
+  }
+
+  /**
+   * compliance_rate riil = 1 - (violation_count / total_count) dari detection_stats,
+   * yang diisi StreamService dari SEMUA deteksi (compliant + non-compliant) real-time.
+   * Fallback ke estimasi kasar hanya jika belum ada data stats untuk periode tsb
+   * (mis. sebelum fitur ini di-deploy, atau ai-service belum pernah publish).
+   */
+  private _realRate(statsTotal: number, statsViolations: number, violationsFallback: number): number {
+    if (statsTotal > 0) {
+      return Math.round((1 - statsViolations / statsTotal) * 1000) / 10;
+    }
+    return this._estimateRateFallback(violationsFallback);
+  }
+
+  private _estimateRateFallback(violations: number): number {
+    // Fallback untuk periode tanpa data detection_stats (mis. data historis
+    // sebelum fitur counter riil ini ada). Asumsi total deteksi/hari = violations * 4.
     const est = Math.max(violations * 4, 50);
     return Math.round((1 - violations / est) * 1000) / 10;
   }
 
-  async getDailyTrend(days = 7) {
-    return Promise.all(
-      Array.from({ length: days }, (_, i) => days - 1 - i).map(
-        async (offset) => {
-          const d = new Date();
-          d.setDate(d.getDate() - offset);
-          const s = new Date(d);
-          s.setHours(0, 0, 0, 0);
-          const e = new Date(d);
-          e.setHours(23, 59, 59, 999);
-          const total = await this.violationRepo.count({
-            where: { detected_at: Between(s, e) },
-          });
-          return {
-            date: d.toISOString().slice(0, 10),
-            total_violations: total,
-            compliance_rate: this._estimateRate(total),
-          };
-        },
-      ),
+  /**
+   * Tren kepatuhan, otomatis di-bucket sesuai panjang rentang tanggal:
+   *  - <=14 hari   -> per hari   (mis. filter "7 Hari")
+   *  - <=60 hari   -> per minggu (mis. filter "1 Bulan")
+   *  - >60 hari    -> per bulan  (mis. filter "3 Bulan" / rentang custom panjang)
+   * total_violations dihitung dari tabel violations (per insiden, sesuai
+   * definisi lama). compliance_rate dihitung dari detection_stats (riil).
+   */
+  async getTrend(dateFrom?: string, dateTo?: string, days = 7) {
+    const to = dateTo ? new Date(dateTo) : new Date();
+    const from = dateFrom ? new Date(dateFrom) : new Date(to.getTime() - (days - 1) * 86400000);
+    const fromKey = this._utcDateKey(from);
+    const toKey = this._utcDateKey(to);
+
+    const totalDays = Math.max(
+      1,
+      Math.round((new Date(toKey).getTime() - new Date(fromKey).getTime()) / 86400000) + 1,
     );
+    const unit: Granularity = totalDays <= 14 ? 'day' : totalDays <= 60 ? 'week' : 'month';
+
+    const buckets = this._bucketStarts(new Date(fromKey), new Date(toKey), unit);
+
+    const [violationRows, statsRows] = await Promise.all([
+      this.violationRepo
+        .createQueryBuilder('v')
+        .select(`date_trunc('${unit}', v.detected_at AT TIME ZONE 'UTC')`, 'bucket')
+        .addSelect('COUNT(*)', 'count')
+        .where('v.detected_at >= :df', { df: new Date(fromKey) })
+        .andWhere('v.detected_at <= :dt', { dt: this._endOfUtcDay(new Date(toKey)) })
+        .groupBy('bucket')
+        .getRawMany<{ bucket: Date; count: string }>(),
+      this.statsRepo
+        .createQueryBuilder('ds')
+        .select(`date_trunc('${unit}', ds.date::timestamp)`, 'bucket')
+        .addSelect('COALESCE(SUM(ds.total_count), 0)', 'total')
+        .addSelect('COALESCE(SUM(ds.violation_count), 0)', 'violations')
+        .where('ds.date BETWEEN :df AND :dt', { df: fromKey, dt: toKey })
+        .groupBy('bucket')
+        .getRawMany<{ bucket: Date; total: string; violations: string }>(),
+    ]);
+
+    const violationMap = new Map(
+      violationRows.map((r) => [this._utcDateKey(new Date(r.bucket)), parseInt(r.count, 10)]),
+    );
+    const statsMap = new Map(
+      statsRows.map((r) => [
+        this._utcDateKey(new Date(r.bucket)),
+        { total: parseInt(r.total, 10), violations: parseInt(r.violations, 10) },
+      ]),
+    );
+
+    return buckets.map((b) => {
+      const key = this._utcDateKey(b);
+      const totalViolations = violationMap.get(key) ?? 0;
+      const stats = statsMap.get(key) ?? { total: 0, violations: 0 };
+      return {
+        date: key,
+        total_violations: totalViolations,
+        compliance_rate: this._realRate(stats.total, stats.violations, totalViolations),
+        granularity: unit,
+      };
+    });
+  }
+
+  /** Dipakai PDF export: jendela N hari terakhir, selalu granularitas harian (N<=14). */
+  async getDailyTrend(days = 7) {
+    const to = new Date();
+    const from = new Date(to.getTime() - (days - 1) * 86400000);
+    return this.getTrend(this._utcDateKey(from), this._utcDateKey(to), days);
+  }
+
+  private _endOfUtcDay(d: Date): Date {
+    const x = new Date(d);
+    x.setUTCHours(23, 59, 59, 999);
+    return x;
+  }
+
+  private _truncateUtc(d: Date, unit: Granularity): Date {
+    const x = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    if (unit === 'day') return x;
+    if (unit === 'week') {
+      const day = x.getUTCDay(); // 0=Min..6=Sab
+      const diff = day === 0 ? 6 : day - 1; // Senin sebagai awal minggu, sama seperti date_trunc('week', ...) Postgres
+      x.setUTCDate(x.getUTCDate() - diff);
+      return x;
+    }
+    x.setUTCDate(1); // month
+    return x;
+  }
+
+  private _bucketStarts(from: Date, to: Date, unit: Granularity): Date[] {
+    const starts: Date[] = [];
+    let cur = this._truncateUtc(from, unit);
+    const end = this._truncateUtc(to, unit);
+    while (cur.getTime() <= end.getTime()) {
+      starts.push(new Date(cur));
+      if (unit === 'day') cur = new Date(cur.getTime() + 86400000);
+      else if (unit === 'week') cur = new Date(cur.getTime() + 7 * 86400000);
+      else cur = new Date(Date.UTC(cur.getUTCFullYear(), cur.getUTCMonth() + 1, 1));
+    }
+    return starts;
   }
 
   async getByType(dateFrom?: string, dateTo?: string) {

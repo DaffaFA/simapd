@@ -1,0 +1,24 @@
+[
+  {
+    "track_id": 2,
+    "helm_color": "Hijau",
+    "role_label": "Safety Officer",
+    "missing_helm": true,
+    "missing_vest": true,
+    "missing_shoes": true,
+    "missing_ppe": [
+      "helm",
+      "vest",
+      "sepatu"
+    ],
+    "is_compliant": false,
+    "confidence": 0.9393373727798462,
+    "bbox": [
+      2232,
+      1580,
+      2679,
+      2367
+    ],
+    "camera_id": "inference-batch"
+  }
+]

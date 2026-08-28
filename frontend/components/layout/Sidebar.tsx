@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, AlertTriangle, Users, BarChart2, Shield, Settings } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { LayoutDashboard, AlertTriangle, Users, BarChart2, Shield, Settings, LogOut, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/src/lib/AuthContext';
 import { ROLE_LABELS, EDITOR_ROLES, hasRole } from '@/src/lib/roles';
 import type { Role } from '@/src/types/simapd';
@@ -18,11 +19,25 @@ const navItems: { to: string; label: string; icon: typeof LayoutDashboard; roles
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const visibleItems = navItems.filter((item) => !item.roles || hasRole(user?.role, item.roles));
   const initials = user?.full_name
     ? user.full_name.split(' ').filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join('')
     : '?';
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [menuOpen]);
 
   return (
     <aside
@@ -101,38 +116,102 @@ export function Sidebar() {
       </nav>
 
       {/* User strip */}
-      <div
-        style={{
-          padding: '12px 16px',
-          borderTop: '1px solid #1E2D3D',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-        }}
-      >
-        <div
+      <div ref={menuRef} style={{ position: 'relative' }}>
+        {menuOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '100%',
+              left: 12,
+              right: 12,
+              marginBottom: 6,
+              background: '#161B22',
+              border: '1px solid #1E2D3D',
+              borderRadius: 8,
+              padding: 4,
+              boxShadow: '0 -4px 16px rgba(0,0,0,0.35)',
+              zIndex: 20,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                logout();
+              }}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 10px',
+                borderRadius: 6,
+                border: 'none',
+                background: 'transparent',
+                color: '#F87171',
+                fontSize: 12,
+                fontFamily: 'DM Sans, sans-serif',
+                fontWeight: 600,
+                cursor: 'pointer',
+                textAlign: 'left',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(248,113,113,0.1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+            >
+              <LogOut size={14} color="#F87171" />
+              Keluar
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
           style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: 'rgba(34,197,94,0.15)',
-            border: '1.5px solid rgba(34,197,94,0.4)',
+            width: '100%',
+            padding: '12px 16px',
+            borderTop: '1px solid #1E2D3D',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 13,
-            color: '#22C55E',
-            fontFamily: 'DM Sans, sans-serif',
-            fontWeight: 700,
-            flexShrink: 0,
+            gap: 10,
+            background: menuOpen ? '#131A24' : 'transparent',
+            border: 'none',
+            borderTopWidth: 1,
+            borderTopStyle: 'solid',
+            borderTopColor: '#1E2D3D',
+            cursor: 'pointer',
+            textAlign: 'left',
           }}
         >
-          {initials}
-        </div>
-        <div>
-          <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0' }}>{user?.full_name ?? '-'}</div>
-          <div style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>{user ? ROLE_LABELS[user.role] : ''}</div>
-        </div>
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: 'rgba(34,197,94,0.15)',
+              border: '1.5px solid rgba(34,197,94,0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 13,
+              color: '#22C55E',
+              fontFamily: 'DM Sans, sans-serif',
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            {initials}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#E2E8F0' }}>{user?.full_name ?? '-'}</div>
+            <div style={{ fontSize: 10, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>{user ? ROLE_LABELS[user.role] : ''}</div>
+          </div>
+          <ChevronUp
+            size={14}
+            color="#64748B"
+            style={{ transition: 'transform 0.15s ease', transform: menuOpen ? 'rotate(0deg)' : 'rotate(180deg)', flexShrink: 0 }}
+          />
+        </button>
       </div>
     </aside>
   );

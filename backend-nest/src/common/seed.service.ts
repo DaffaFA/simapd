@@ -104,11 +104,11 @@ export class SeedService implements OnApplicationBootstrap {
         },
         {
           employee_id: 'SO-001',
-          full_name: 'Andi Maulana',
+          full_name: 'Daffa Dziban Fadia',
           role: 'Safety Officer',
           helm_color: 'Hijau',
           department: 'HSE',
-          email: 'andi.maulana@simapd.local',
+          email: 'daffa.10522911@mahasiswa.unikom.ac.id',
         },
       ]);
     }

@@ -27,6 +27,21 @@ class StreamReader:
     self.is_running = False
     if self._thread: self._thread.join(timeout=5)
 
+  def _draw_violation_box(self, frame, det: dict):
+    """Gambar bounding box + label pelanggaran di atas salinan frame, untuk evidence."""
+    annotated = frame.copy()
+    x1, y1, x2, y2 = [int(v) for v in det.get('bbox', [0, 0, 0, 0])]
+    color = (0, 0, 255)  # merah (BGR)
+    cv2.rectangle(annotated, (x1, y1), (x2, y2), color, 2)
+
+    label = f"{det.get('role_label', 'Unknown')} - missing: {', '.join(det.get('missing_ppe', []))}"
+    (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
+    label_y = max(0, y1 - th - 6)
+    cv2.rectangle(annotated, (x1, label_y), (x1 + tw + 6, label_y + th + 6), color, -1)
+    cv2.putText(annotated, label, (x1 + 3, label_y + th + 2),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
+    return annotated
+
   def _save_frame(self, frame, camera_id: str, track_id: int) -> str | None:
     """
     Simpan frame sebagai JPEG ke RustFS.
@@ -132,8 +147,9 @@ class StreamReader:
             if track_key not in recorded:
               recorded.add(track_key)
 
-              # Capture frame saat violation terdeteksi
-              frame_key = self._save_frame(frame, self.camera_id, det['track_id'])
+              # Capture frame saat violation terdeteksi (dengan bounding box)
+              annotated_frame = self._draw_violation_box(frame, det)
+              frame_key = self._save_frame(annotated_frame, self.camera_id, det['track_id'])
 
               self.redis_pub.publish('detections', {
                 **det,

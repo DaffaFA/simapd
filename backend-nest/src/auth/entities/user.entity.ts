@@ -23,4 +23,8 @@ export class User extends BaseEntity {
 
   @Column({ type: 'timestamptz', nullable: true })
   last_login: Date;
+
+  // Tanda tangan digital (data URI base64), dilampirkan ke PDF Surat Peringatan.
+  @Column({ type: 'text', nullable: true })
+  signature: string | null;
 }
