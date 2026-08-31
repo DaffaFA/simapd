@@ -54,12 +54,13 @@ function drawOverlay(
 
     if (!showLabels) continue
 
-    // ── Label text ────────────────────────────────────────────────────────
-    const text = det.is_compliant
+    // ── Label text (track ID + role/status) ─────────────────────────────────
+    const statusText = det.is_compliant
       ? `${det.role_label}`
       : det.missing_ppe.length > 0
         ? `✗ ${det.missing_ppe.join(', ')}`
         : '✗ Pelanggaran'
+    const text = `#${det.track_id} · ${statusText}`
 
     const metrics    = ctx.measureText(text)
     const labelW     = metrics.width + 10
@@ -74,12 +75,6 @@ function drawOverlay(
     // Label text
     ctx.fillStyle = '#fff'
     ctx.fillText(text, labelX + 5, labelY + labelH - 2)
-
-    // Track ID kecil
-    ctx.font      = '10px monospace'
-    ctx.fillStyle = 'rgba(255,255,255,0.7)'
-    ctx.fillText(`#${det.track_id}`, x1 + 2, y2 - 2)
-    ctx.font      = 'bold 12px system-ui, sans-serif'
   }
 
   ctx.restore()
