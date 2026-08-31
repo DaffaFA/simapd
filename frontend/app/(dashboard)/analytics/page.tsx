@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Cell, ResponsiveContainer } from 'recharts';
 import { Download } from 'lucide-react';
 import { HelmDot } from '@/components/shared/HelmDot';
+import { FormulaInfo } from '@/components/shared/FormulaInfo';
 import { analyticsApi } from '@/src/lib/api';
 
 interface TrendDay { date: string; total_violations: number; compliance_rate: number; granularity?: 'day' | 'week' | 'month' }
@@ -216,6 +217,7 @@ export default function Analytics() {
               <span style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', color: '#64748B' }}>Rata-rata periode ini</span>
             </div>
           </div>
+          <FormulaInfo formula="(1 − jumlah pelanggaran ÷ total deteksi) × 100%, dihitung per bucket waktu (hari/minggu/bulan) dari data deteksi real-time." />
         </div>
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height={200}>
@@ -257,17 +259,23 @@ export default function Analytics() {
       {/* Breakdown 2-col */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div style={{ background: '#111827', border: '1px solid #1E2D3D', borderRadius: 10, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h3 style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Distribusi per Jenis APD
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              Distribusi per Jenis APD
+            </h3>
+            <FormulaInfo formula="Jumlah pelanggaran per jenis APD (helm/rompi/sepatu) ÷ total pelanggaran per jenis pada periode ini × 100%." />
+          </div>
           {apdBreakdown.length > 0 ? apdBreakdown.map(b => <HorizontalBar key={b.label} {...b} />) : (
             <span style={{ fontSize: 12, color: '#64748B' }}>Belum ada data</span>
           )}
         </div>
         <div style={{ background: '#111827', border: '1px solid #1E2D3D', borderRadius: 10, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <h3 style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Distribusi per Shift
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              Distribusi per Shift
+            </h3>
+            <FormulaInfo formula="Jumlah pelanggaran per shift (Pagi/Siang/Malam) ÷ total pelanggaran semua shift pada periode ini × 100%." />
+          </div>
           {shiftBreakdown.length > 0 ? shiftBreakdown.map(b => <HorizontalBar key={b.label} {...b} />) : (
             <span style={{ fontSize: 12, color: '#64748B' }}>Belum ada data</span>
           )}
@@ -284,9 +292,12 @@ export default function Analytics() {
       {/* Per-employee table */}
       <div style={{ background: '#111827', border: '1px solid #1E2D3D', borderRadius: 10, overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid #1E2D3D', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-            Top Pelanggar
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h3 style={{ fontSize: 12, fontFamily: 'DM Sans, sans-serif', fontWeight: 700, color: '#E2E8F0', margin: 0, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              Top Pelanggar
+            </h3>
+            <FormulaInfo formula="Jumlah pelanggaran per personel pada periode ini, diurutkan menurun (10 tertinggi)." />
+          </div>
           <button onClick={() => downloadReport('csv')} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 12px', borderRadius: 6, border: '1px solid #1E2D3D', background: 'transparent', color: '#94A3B8', fontSize: 11, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer' }}>
             <Download size={12} />
             Export CSV

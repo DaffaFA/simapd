@@ -68,6 +68,7 @@ export default function Dashboard() {
           icon={<Shield size={18} />}
           valueColor="#22C55E"
           accentColor="#22C55E"
+          formula="(1 − jumlah pelanggaran ÷ total deteksi) × 100%, dihitung dari data deteksi real-time hari ini."
         />
         <StatCard
           label="Total Pelanggaran"
@@ -78,6 +79,7 @@ export default function Dashboard() {
           icon={<AlertTriangle size={18} />}
           valueColor="#EF4444"
           accentColor="#EF4444"
+          formula="Jumlah baris pelanggaran dengan waktu deteksi antara 00:00–23:59 hari ini."
         />
         <StatCard
           label="Terhubung Personel"
@@ -86,6 +88,7 @@ export default function Dashboard() {
           icon={<Users size={18} />}
           valueColor="#3B82F6"
           accentColor="#3B82F6"
+          formula="Pelanggaran hari ini yang sudah dikaitkan ke personel ÷ total pelanggaran hari ini."
         />
         <StatCard
           label="Personel Ber-SP"
@@ -94,6 +97,7 @@ export default function Dashboard() {
           icon={<FileWarning size={18} />}
           valueColor="#F59E0B"
           accentColor="#F59E0B"
+          formula="Jumlah Surat Peringatan berstatus aktif (belum melewati tanggal berlaku)."
         />
       </div>
 

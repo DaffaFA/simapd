@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { FormulaInfo } from './FormulaInfo';
 
 interface StatCardProps {
   label: string;
@@ -9,9 +10,10 @@ interface StatCardProps {
   icon: ReactNode;
   valueColor?: string;
   accentColor?: string;
+  formula?: string;
 }
 
-export function StatCard({ label, value, subtext, trend, trendUp, icon, valueColor = '#E2E8F0', accentColor = '#F97316' }: StatCardProps) {
+export function StatCard({ label, value, subtext, trend, trendUp, icon, valueColor = '#E2E8F0', accentColor = '#F97316', formula }: StatCardProps) {
   return (
     <div
       style={{
@@ -32,7 +34,10 @@ export function StatCard({ label, value, subtext, trend, trendUp, icon, valueCol
         <span style={{ fontSize: 11, fontFamily: 'DM Sans, sans-serif', fontWeight: 600, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
           {label}
         </span>
-        <span style={{ color: accentColor, opacity: 0.8 }}>{icon}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {formula && <FormulaInfo formula={formula} />}
+          <span style={{ color: accentColor, opacity: 0.8 }}>{icon}</span>
+        </div>
       </div>
       <div>
         <span style={{ fontSize: 28, fontFamily: 'JetBrains Mono, monospace', fontWeight: 500, color: valueColor, lineHeight: 1.1 }}>
