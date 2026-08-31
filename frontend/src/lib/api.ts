@@ -65,6 +65,14 @@ export const personnelApi = {
   update: (id: string, b: Partial<Personnel>) =>
     apiFetch<Personnel>(`/personnel/${id}`, { method: 'PUT', body: JSON.stringify(b) }),
   delete: (id: string) => apiFetch<void>(`/personnel/${id}`, { method: 'DELETE' }),
+  exportProfile: async (id: string, employeeId?: string) => {
+    const blob = await apiDownload(`/personnel/${id}/export`)
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `profil_${employeeId ?? id}.pdf`,
+    })
+    a.click(); URL.revokeObjectURL(a.href)
+  },
 }
 
 export const violationApi = {

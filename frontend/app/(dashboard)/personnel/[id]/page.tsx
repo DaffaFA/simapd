@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { getPersonnel, updatePersonnel, getViolationsByPersonnel, getSPRecordsByPersonnel, getViolationFrameUrl, spApi } from '@/src/lib/api'
+import { getPersonnel, updatePersonnel, getViolationsByPersonnel, getSPRecordsByPersonnel, getViolationFrameUrl, spApi, personnelApi } from '@/src/lib/api'
 import type { Personnel, Violation, SpRecord, UpdatePersonnelDto } from '@/src/types/simapd'
 import { useAuth } from '@/src/lib/AuthContext'
 import { EDITOR_ROLES, hasRole } from '@/src/lib/roles'
@@ -33,6 +33,7 @@ export default function PersonnelDetailPage() {
   const [issueSpError, setIssueSpError] = useState<string | null>(null)
   const [sendingEmailId, setSendingEmailId] = useState<string | null>(null)
   const [emailFeedback, setEmailFeedback]   = useState<{ id: string; ok: boolean; message: string } | null>(null)
+  const [exporting,    setExporting]  = useState(false)
 
   const canEdit = hasRole(user?.role, EDITOR_ROLES)
 
@@ -125,6 +126,18 @@ export default function PersonnelDetailPage() {
     }
   }
 
+  const handleExport = async () => {
+    if (!personnel) return
+    setExporting(true)
+    try {
+      await personnelApi.exportProfile(personnel.id, personnel.employee_id)
+    } catch (e) {
+      alert('Gagal mengekspor profil karyawan')
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const sendSpLetterEmail = async (spId: string) => {
     setSendingEmailId(spId)
     setEmailFeedback(null)
@@ -181,6 +194,14 @@ export default function PersonnelDetailPage() {
           <span className={`px-2 py-1 rounded text-xs ${personnel.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
             {personnel.is_active ? 'Aktif' : 'Non-aktif'}
           </span>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#1E2D3D] text-gray-300 border border-[#2D3F54] rounded-lg text-sm hover:bg-[#2A3F5A] transition-colors disabled:opacity-50"
+            title="Ekspor profil karyawan sebagai PDF"
+          >
+            {exporting ? '⏳ Mengekspor...' : '📄 Export'}
+          </button>
           {canEdit && !editMode && (
             <button onClick={() => setEditMode(true)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
