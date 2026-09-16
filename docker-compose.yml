@@ -59,8 +59,8 @@ services:
       - RUSTFS_ADDRESS=0.0.0.0:9000
       - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
       - RUSTFS_CONSOLE_ENABLE=true
-      - RUSTFS_ACCESS_KEY=QRSSaQVq8Rue4AnjHXJT
-      - RUSTFS_SECRET_KEY=4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-CHANGE_ME_RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-CHANGE_ME_RUSTFS_SECRET_KEY}
       - RUSTFS_UNSAFE_BYPASS_DISK_CHECK=true
     volumes:
       - rustfs_data:/data/rustfs0
@@ -82,14 +82,14 @@ services:
       DATABASE_HOST: postgres
       REDIS_URL: redis://redis:6379
       RUSTFS_ENDPOINT: http://rustfs:9000
-      RUSTFS_ACCESS_KEY: QRSSaQVq8Rue4AnjHXJT
-      RUSTFS_SECRET_KEY: 4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-CHANGE_ME_RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-CHANGE_ME_RUSTFS_SECRET_KEY}
       RUSTFS_BUCKET: simapd-frames
       SMTP_HOST: smtp.gmail.com
       SMTP_PORT: 587
       SMTP_SECURE: false
-      SMTP_USER: daffadzibanf@gmail.com
-      SMTP_PASSWORD: zbydyedhmwjcsigd
+      SMTP_USER: ${SMTP_USER:-change-me@example.com}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-CHANGE_ME_SMTP_PASSWORD}
       SMTP_FROM: SiMAPD <no-reply@simapd.local>
     depends_on:
       postgres: { condition: service_healthy }
@@ -171,8 +171,8 @@ services:
       - CAMERAS=[{"id":"CAM-01","rtsp_url":"rtsp://mediamtx:8554/combined"}]
 
       - RUSTFS_ENDPOINT=http://rustfs:9000
-      - RUSTFS_ACCESS_KEY=QRSSaQVq8Rue4AnjHXJT
-      - RUSTFS_SECRET_KEY=4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-CHANGE_ME_RUSTFS_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-CHANGE_ME_RUSTFS_SECRET_KEY}
       - RUSTFS_BUCKET=simapd-frames
     depends_on:
       redis:     { condition: service_healthy }

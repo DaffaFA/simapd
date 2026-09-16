@@ -7,8 +7,8 @@ import io
 class StorageClient:
     def __init__(self):
         self.endpoint = os.getenv('RUSTFS_ENDPOINT', 'http://localhost:9000')
-        self.access_key = os.getenv('RUSTFS_ACCESS_KEY', 'QRSSaQVq8Rue4AnjHXJT')
-        self.secret_key = os.getenv('RUSTFS_SECRET_KEY', '4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme')
+        self.access_key = os.getenv('RUSTFS_ACCESS_KEY', 'CHANGE_ME_RUSTFS_ACCESS_KEY')
+        self.secret_key = os.getenv('RUSTFS_SECRET_KEY', 'CHANGE_ME_RUSTFS_SECRET_KEY')
         self.bucket = os.getenv('RUSTFS_BUCKET', 'simapd-frames')
         
         # Inisialisasi boto3 client untuk S3-compatible (RustFS)
