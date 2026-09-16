@@ -18,8 +18,8 @@ export class StorageService implements OnApplicationBootstrap {
     this.s3 = new S3Client({
       endpoint:         cfg.get('RUSTFS_ENDPOINT') ?? 'http://rustfs:9000',
       credentials: {
-        accessKeyId:     cfg.get('RUSTFS_ACCESS_KEY') ?? 'QRSSaQVq8Rue4AnjHXJT',
-        secretAccessKey: cfg.get('RUSTFS_SECRET_KEY') ?? '4k8h3y9SBkK9bwjM9VucNI4YKBNpXE07oRH9wIme',
+        accessKeyId:     cfg.get('RUSTFS_ACCESS_KEY') ?? 'CHANGE_ME_RUSTFS_ACCESS_KEY',
+        secretAccessKey: cfg.get('RUSTFS_SECRET_KEY') ?? 'CHANGE_ME_RUSTFS_SECRET_KEY',
       },
       region:          'us-east-1',   // wajib diisi, nilai bebas untuk RustFS
       forcePathStyle:  true,          // wajib untuk S3-compatible (bukan AWS)
